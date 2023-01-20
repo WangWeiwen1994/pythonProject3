@@ -21,6 +21,7 @@ def print_hi(name):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    logger.info("--------------------------------------------------------------------------------------------------")
     logger.info("Start print log")
     parser = argparse.ArgumentParser()
 
@@ -43,7 +44,9 @@ if __name__ == '__main__':
     # 逐个执行传入的analyer分析类
     for analyer_execution in Analyzers:
         if analyer_execution.__name__ == args['Analyzer']:
+            logger.info('Start to do %s' % args['Analyzer'])
             analyer_execution(data).analyzer()
+            logger.info('%s Finished' % args['Analyzer'])
         else:
             logger.info('undefined_Analyzer:%s' % args['Analyzer'])
 

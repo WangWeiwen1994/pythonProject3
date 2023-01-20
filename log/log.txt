@@ -1,0 +1,56 @@
+2023-01-20 19:29:48,746 - main.py - INFO - --------------------------------------------------------------------------------------------------
+2023-01-20 19:29:48,747 - main.py - INFO - Start print log
+2023-01-20 19:29:48,748 - main.py - INFO - Start to do fu_shi_feng_Analyzer
+2023-01-20 19:29:48,749 - fu_shi_feng_Analyzer.py - INFO - 
+current environment:remote_config.ini
+current time:20220630
+current user:南京阜仕丰国际贸易有限公司
+
+2023-01-20 19:29:48,749 - base.py - INFO - 开始输入用户校验：
+2023-01-20 19:29:48,792 - data.py - INFO - 当前数据库连接url:
+mysql+pymysql://www:Wang-684257913@localhost:3306/auto_account?charset=utf8mb4
+2023-01-20 19:29:48,803 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.user_information where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-01-20 19:29:48,804 - data.py - INFO - 返回数据条数:1条;
+2023-01-20 19:29:48,804 - base.py - INFO - 用户校验通过
+2023-01-20 19:29:48,805 - fu_shi_feng_Analyzer.py - INFO - 已创建任务文件夹，路径为：D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_
+2023-01-20 19:30:13,700 - fu_shi_feng_Analyzer.py - INFO - 提取数据库中已有的银行回单信息
+2023-01-20 19:30:13,710 - data.py - INFO - 执行sql语句成功:
+select * from bank_receipt_abc where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-01-20 19:30:13,710 - data.py - INFO - 返回数据条数:225条;
+2023-01-20 19:30:13,710 - base.py - INFO - 未读取到科目表信息
+2023-01-20 19:30:13,710 - fu_shi_feng_Analyzer.py - INFO - 从数据库中读取科目余额表
+2023-01-20 19:30:13,710 - fu_shi_feng_Analyzer.py - INFO - 提取数据库中已有的科目表信息
+2023-01-20 19:30:13,728 - data.py - INFO - 执行sql语句成功:
+select * from balance where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-01-20 19:30:13,728 - data.py - INFO - 返回数据条数:1440条;
+2023-01-20 19:30:13,728 - base.py - INFO - 提取数据库中已有的名称对照表信息
+2023-01-20 19:30:13,731 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.name_comparative_table where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-01-20 19:30:13,731 - data.py - INFO - 返回数据条数:89条;
+2023-01-20 19:30:13,737 - data.py - INFO - 执行sql语句成功:
+select * from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-01-20 19:30:13,737 - data.py - INFO - 返回数据条数:225条;
+2023-01-20 19:30:13,737 - base.py - INFO - 提取数据库中已有的分析逻辑信息
+2023-01-20 19:30:13,740 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.analyze where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-01-20 19:30:13,740 - data.py - INFO - 返回数据条数:82条;
+2023-01-20 19:30:13,740 - base.py - INFO - 提取数据库中已有的操作信息
+2023-01-20 19:30:13,742 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.action;
+2023-01-20 19:30:13,742 - data.py - INFO - 返回数据条数:16条;
+2023-01-20 19:30:13,742 - fu_shi_feng_Analyzer.py - INFO - 数据已加载，准备完毕
+2023-01-20 19:30:13,742 - fu_shi_feng_Analyzer.py - INFO - 开始匹配操作
+2023-01-20 19:30:13,868 - fu_shi_feng_Analyzer.py - INFO - 操作匹配完毕
+2023-01-20 19:30:16,560 - base.py - INFO - 当前已有凭证的最新编号（生成凭证从下一号开始）：0
+2023-01-20 19:30:16,974 - data.py - INFO - 执行删除语句成功DELETE FROM auto_account.aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630
+2023-01-20 19:30:17,015 - data.py - INFO - 执行插入语句成功，插入表格:aapz,插入数据450条
+2023-01-20 19:30:17,015 - base.py - INFO - 提取数据库中已有的记账凭证表
+2023-01-20 19:30:17,028 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-01-20 19:30:17,028 - data.py - INFO - 返回数据条数:450条;
+2023-01-20 19:30:17,140 - base.py - INFO - 输出记账凭证文件：D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_2023-01-20-19_29_48/凭证输出/20220630aapz.xls
+2023-01-20 19:30:17,146 - data.py - INFO - 执行删除语句成功DELETE FROM auto_account.execution WHERE User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630
+2023-01-20 19:30:17,179 - data.py - INFO - 执行插入语句成功，插入表格:execution,插入数据225条
+2023-01-20 19:30:17,179 - fu_shi_feng_Analyzer.py - INFO - 分析结束
+2023-01-20 19:30:17,180 - main.py - INFO - fu_shi_feng_Analyzer Finished
