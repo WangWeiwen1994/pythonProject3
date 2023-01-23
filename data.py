@@ -9,18 +9,24 @@ class Data():
         self.filename = filename
         self.date = date
         self.user = user
+        # 将收到的参数传入到config类中
         self.configs = config(filename=self.filename,date=self.date,user = self.user)
         self.aapz_number_type = aapz_number_type
         self.engine = None
+        # config类初始化后，调用config类中的方法，读取对应的sql链接信息
         self.connect_url = self.configs.sql_engine_connect()
-        self.input_path = self.configs.get_file_path() #发票和银行回单的输入路径
+        # config类初始化后，调用config类中的方法，读取发票和银行回单的输入路径
+        self.input_path = self.configs.get_file_path()
+        # config类初始化后，调用config类中的方法，读取高频词列表
         self.High_frequency_words = self.configs.get_High_frequency_words()
 
+    # 创建sql引擎
     def get_sql_engine(self):
         engine = create_engine(self.connect_url, echo=False)
         logger.info('当前数据库连接url:\n%s' % self.connect_url)
         self.engine = engine
 
+    # 执行sql语句，返回执行结果
     def load_sql(self,sql):
         if self.engine == None:
             self.get_sql_engine()
@@ -34,6 +40,7 @@ class Data():
             logger.info('执行sql语句失败:\n'+sql)
             return None
 
+    # 插入数据到指定表格
     def insert_sql(self,df,tablename,dtype=None):
         if self.engine == None:
             self.get_sql_engine()
@@ -43,6 +50,7 @@ class Data():
         except:
             logger.info('执行插入语句失败')
 
+    # 执行指定的删除语句
     def delete_sql(self,sql):
         if self.engine == None:
             self.get_sql_engine()
