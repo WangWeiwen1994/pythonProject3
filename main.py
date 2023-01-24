@@ -38,16 +38,27 @@ if __name__ == '__main__':
     parser.add_argument("-at", "--aapz_number_type", help="choose the type 'default' or 'bank_in_day'", required=True, default='default')
     args = vars(parser.parse_args())
 
+    # 处理传入的分析类参数
+    args['Analyzer'] = args['Analyzer'].split(',')
+    # 获取当前可供执行的分析类,检查用户传入的分析类是否有效
+    Analyzers_list = []
+    for analyzer_execution in Analyzers:
+        Analyzers_list.append(analyzer_execution.__name__)
+    for analyzer in args['Analyzer']:
+        if analyzer not in Analyzers_list:
+            # 如为无效的分析类名称，则删除
+            logger.info('undefined_Analyzer:%s' % analyzer)
+            args['Analyzer'].remove(analyzer)
+
     # 向data类中传入除analyzer外的全部配置参数
     data = Data(filename=args['Environment'], date=args['Time'], user=args['User'], aapz_number_type=args['aapz_number_type'] )
 
     # 逐个执行传入的analyer分析类
-    for analyer_execution in Analyzers:
-        if analyer_execution.__name__ == args['Analyzer']:
-            logger.info('Start to do %s' % args['Analyzer'])
-            analyer_execution(data).analyzer()
-            logger.info('%s Finished' % args['Analyzer'])
-        else:
-            logger.info('undefined_Analyzer:%s' % args['Analyzer'])
+    for analyzer in args['Analyzer']:
+        for analyzer_execution in Analyzers:
+            if analyzer_execution.__name__ == analyzer:
+                logger.info('----------------------------------Start to do %s------------------------------' % analyzer)
+                analyzer_execution(data).analyzer()
+                logger.info('---------------------------------%s Finished----------------------------------' % analyzer)
 
 
