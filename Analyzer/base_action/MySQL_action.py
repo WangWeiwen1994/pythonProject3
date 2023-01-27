@@ -2,6 +2,7 @@ from .base import Base_Action
 from logger import logger
 import pandas as pd
 import os
+from dbfread import DBF
 
 
 # 获取文件夹下全部文件路径
@@ -10,6 +11,12 @@ def getFlist(path):
     for root, dirs, read_files in os.walk(path):
         read_files_list.append(read_files)  # 文件名称，返回list类型
     return read_files_list
+
+# 读取DBF文件
+def read_DBF(filename):
+    data = DBF(filename, encoding='GBK')
+    df = pd.DataFrame(iter(data))
+    return df
 
 # 定义银行回单表操作类
 class MySQL_action_bank_receipt_abc(Base_Action):
@@ -24,9 +31,9 @@ class MySQL_action_bank_receipt_abc(Base_Action):
         # 将属性中的当前用户和账期信息传入sql语句中
         get_bank_file_sql = get_bank_file_sql.format(User=self.user, date=self.date)
         # 执行sql语句
-        self.bank_file = self.data.load_sql(sql=get_bank_file_sql)
+        bank_file = self.data.load_sql(sql=get_bank_file_sql)
         logger.info('【提取该公司当前账期下全部的银行回单数据：完成】')
-        return self.bank_file
+        return bank_file
 
     def insert_InputData(self, FolderName_dic):
         logger.info('【读取任务文件夹中的银行回单数据：开始】')
@@ -69,6 +76,18 @@ class MySQL_action_bank_receipt_abc(Base_Action):
 class MySQL_action_execution(Base_Action):
     def __init__(self,Data):
         super().__init__(Data)
+
+    # 提取该公司该账期下全部的交易表数据
+    def get_All_Data(self):
+        logger.info('【提取该公司当前账期下全部的交易表数据：开始】')
+        # 生成sql查询语句
+        get_exectuion_sql = "select * from execution where User_full_name = '{User}' and Time = {date}"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        get_exectuion_sql = get_exectuion_sql.format(User=self.user, date=self.date)
+        # 执行sql语句
+        exectuion = self.data.load_sql(sql=get_exectuion_sql)
+        logger.info('【提取该公司当前账期下全部的交易表数据：完成】')
+        return exectuion
 
     # 该方法用于将农业银行回单数据抽取到execution表中
     # 抽取转换逻辑为
@@ -117,3 +136,103 @@ class MySQL_action_execution(Base_Action):
         # 执行sql语句
         self.data.delete_sql(sql=delete_execution_sql)
         logger.info('【删除该公司当前账期下全部的银行回单交易数据：完成】')
+
+# 定义科目表操作类
+class MySQL_action_balance(Base_Action):
+    def __init__(self, Data):
+        super().__init__(Data)
+    # 删除该公司当前账期下全部的科目表数据
+    def delete_All_Data(self):
+        logger.info('【删除该公司当前账期下全部的科目表数据：开始】')
+        # 生成sql查询语句
+        sql = "DELETE FROM auto_account.balance WHERE User_full_name = '{User}'"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        sql = sql.format(User=self.user)
+        # 执行sql语句
+        self.data.delete_sql(sql=sql)
+        logger.info('【删除该公司当前账期下全部的科目表数据：完成】')
+
+    # 该方法专用于读取科目表信息，若从任务文件夹中读取到科目余额表，则覆盖写入balance表中
+    def insert_InputData(self,FolderName_dic):
+        logger.info('【从任务文件夹读取科目表：开始】')
+        try:
+            balance_file_path = getFlist(FolderName_dic['input_path_Balance'])
+            balance_file_path = FolderName_dic['input_path_Balance']+'/'+ balance_file_path[0][0]
+            logger.info('读取科目余额表文件：%s',balance_file_path)
+            balance_file = read_DBF(balance_file_path)
+            balance_file = balance_file[['LB', 'MXKMS', 'JFKM', 'DFKM', 'JD', 'JZ', 'KMMC']]
+            balance_file.insert(loc=0,column='User_full_name',value=self.user)
+            # 删除已有的科目余额表
+            self.delete_All_Data()
+            # 将文件数据插入数据库
+            self.data.insert_sql(df=balance_file, tablename='balance')
+            logger.info('科目表已根据输入数据更新')
+            logger.info('【从任务文件夹读取科目表：完成】')
+            return balance_file
+        except:
+            logger.info('未读取到科目表信息')
+            balance_file = pd.DataFrame()
+            logger.info('【从任务文件夹读取科目表：完成】')
+            return balance_file
+
+    # 提取该公司该账期下全部的科目表数据
+    def get_All_Data(self):
+        logger.info('【提取该公司当前账期下全部的科目表数据：开始】')
+        # 生成sql查询语句
+        get_balance_sql = "select * from balance where User_full_name = '{User}'"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        get_balance_sql = get_balance_sql.format(User=self.user, date=self.date)
+        # 执行sql语句
+        balance = self.data.load_sql(sql=get_balance_sql)
+        logger.info('【提取该公司当前账期下全部的科目表数据：完成】')
+        return balance
+
+# 定义名称对照表操作类
+class MySQL_action_name_comparative_table(Base_Action):
+    def __init__(self, Data):
+        super().__init__(Data)
+
+    # 提取该公司全部的公司名称对照表数据
+    def get_All_Data(self):
+        logger.info('【提取该公司全部的公司名称对照表数据：开始】')
+        # 生成sql查询语句
+        get_name_comparative_file = "select * from auto_account.name_comparative_table where User_full_name = '{User}'"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        get_name_comparative_file = get_name_comparative_file.format(User=self.user)
+        # 执行sql语句
+        name_comparative_file = self.data.load_sql(sql=get_name_comparative_file)
+        logger.info('【提取该公司全部的公司名称对照表数据：完成】')
+        return name_comparative_file
+
+# 定义名称分析逻辑表操作类
+class MySQL_action_analyze(Base_Action):
+    def __init__(self, Data):
+        super().__init__(Data)
+
+    # 提取该公司全部的分析逻辑表数据
+    def get_All_Data(self):
+        logger.info('【提取该公司全部的分析逻辑表数据：开始】')
+        # 生成sql查询语句
+        get_analyze_sql = "select * from auto_account.analyze where User_full_name = '{User}'"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        get_analyze_sql = get_analyze_sql.format(User=self.user)
+        # 执行sql语句
+        analyze_file = self.data.load_sql(sql=get_analyze_sql)
+        logger.info('【提取该公司全部的分析逻辑表数据：完成】')
+        return analyze_file
+
+# 定义名称分析逻辑表操作类
+class MySQL_action_action(Base_Action):
+    def __init__(self, Data):
+        super().__init__(Data)
+
+    # 提取该公司全部的操作表数据
+    def get_All_Data(self):
+        logger.info('【提取该公司全部的操作表数据：开始】')
+        # 生成sql查询语句
+        get_action_sql = "select * from auto_account.action"
+        # 执行sql语句
+        action_file = self.data.load_sql(sql=get_action_sql)
+        logger.info('【提取该公司全部的操作表数据：完成】')
+        return action_file
+

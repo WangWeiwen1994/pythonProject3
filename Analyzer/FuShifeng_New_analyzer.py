@@ -24,8 +24,27 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         else:
             logger.info('数据库中已查询到银行回单信息%s条，直接使用' % (len(bank_file)))
 
-        # 删除execution表中的数据(同公司同账期)
+        # 删除execution表中的原有数据(同公司同账期)
         self.MySQL_action_execution.delete_All_Data()
 
-        logger.info('将银行回单数据，抽取转置后插入execution表中')
+        # 查询银行回单数据，将其抽取转置后插入到execution表中
         self.MySQL_action_execution.ETL_bank_receipt_abc_To_execution()
+
+        # 读取任务文件中的科目余额表信息，若从任务文件夹中读取到科目余额表，则覆盖写入balance表中
+        balance_file = self.MySQL_action_balance.insert_InputData(FolderName_dic)
+
+        # 若任务文件夹中未读取到科目余额表信息，则直接调用数据库中的科目表数据
+        if balance_file.empty:
+            balance_file = self.MySQL_action_balance.get_All_Data()
+
+        # 提取数据库中已有的名称对照表全部数据(同公司)
+        name_comparative_file = self.MySQL_action_name_comparative_table.get_All_Data()
+
+        # 提取数据库中的交易表全部数据(同公司)
+        execution_file = self.MySQL_action_execution.get_All_Data()
+
+        # 提取数据库中的分析逻辑表全部数据(同公司)
+        analyze_file = self.MySQL_action_analyze.get_All_Data()
+
+        # 提取数据库中的操作信息表全部数据
+        action_file = self.MySQL_action_action.get_All_Data()
