@@ -5,7 +5,7 @@ class Verification(Base_Action):
     def __init__(self,Data):
         super().__init__(Data)
 
-    # 输入用户校验
+    # 输入用户校验,返回结果为提取到的用户信息
     def UserCheck(self):
         logger.info('【用户校验：开始】：')
         df = self.data.load_sql("select * from auto_account.user_information where User_full_name = '%s'" %self.user)
@@ -20,3 +20,4 @@ class Verification(Base_Action):
             else:
                 self.bank_account = df['Bank_account'][0]
                 logger.info('【用户校验结果：校验通过】')
+        return df

@@ -9,7 +9,7 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         logger.info('\ncurrent environment:%s\ncurrent time:%s\ncurrent user:%s\n' %(self.filename,self.date,self.user))
 
         # 进行用户校验
-        self.Verification.UserCheck()
+        user_info = self.Verification.UserCheck()
 
         # 创建任务文件夹，用户在文件夹中存入待计算数据后，获取对应文件的路径字典
         FolderName_dic = self.Interaction.mission_file_preparation()
@@ -38,7 +38,7 @@ class FuShifeng_New_analyzer(Base_Action_dic):
             balance_file = self.MySQL_action_balance.get_All_Data()
 
         # 提取数据库中已有的名称对照表全部数据(同公司)
-        name_comparative_file = self.MySQL_action_name_comparative_table.get_All_Data()
+        self.Produce_aapz_action.name_comparative_file = self.MySQL_action_name_comparative_table.get_All_Data()
 
         # 提取数据库中的交易表全部数据(同公司)
         execution_file = self.MySQL_action_execution.get_All_Data()
@@ -48,3 +48,33 @@ class FuShifeng_New_analyzer(Base_Action_dic):
 
         # 提取数据库中的操作信息表全部数据
         action_file = self.MySQL_action_action.get_All_Data()
+
+
+
+        # 该部分流程须修改。做成一个新的方法类，返回结果插入execution表中
+
+        # 调用匹配逻辑v0001,为execution表中的操作列赋值,返回处理后的execution
+        execution_file = self.MySQL_action_execution.action_match_v0001(execution=execution_file,analyze_file=analyze_file)
+
+        # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，插入execution表中，返回处理后的execution
+        execution_file = self.MySQL_action_execution.aapz_number(execution_file)
+
+        # 生成记账凭证
+        self.Produce_aapz_action.balance_file = balance_file
+        self.Produce_aapz_action.execution = execution_file
+        self.Produce_aapz_action.analyze = analyze_file
+        self.Produce_aapz_action.action = action_file
+        self.Produce_aapz_action.execution = execution_file
+        self.Produce_aapz_action.bank_account = user_info['Bank_account'][0]
+        aapz = self.Produce_aapz_action.aapz_manager()
+
+        #logger.info(aapz)
+        #aapz.to_sql('auto_account.aapz', con=self.engine, if_exists='append', index=False, dtype=None)
+
+        # 记账凭证插入aapz表中
+        self.MySQL_action_aapz.insert_after_delete(df=aapz)
+
+        # 将aapz表中数据转换成可输入小精灵的格式，生成一个EXCEL
+        self.Produce_aapz_action.aapz = self.MySQL_action_aapz.get_All_Data()
+        self.Produce_aapz_action.aapz_out_put(FolderName_dic=FolderName_dic)
+

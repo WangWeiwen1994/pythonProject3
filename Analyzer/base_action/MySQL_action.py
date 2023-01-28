@@ -18,6 +18,22 @@ def read_DBF(filename):
     df = pd.DataFrame(iter(data))
     return df
 
+# 根据输入的条件，在分析逻辑表中筛选出相应的操作代码
+    # 该函数逻辑为，根据每一笔交易中的元素，查找对应的逻辑
+    # 示例：
+    # 当前交易为银行流水，用户收到一笔来在XXXX公司的款项，随后查找有无逻辑可同时满足上述的用户，原始凭证类型，交易对手方，交易方向。
+    # 如能够匹配，则返回逻辑记录的操作ID
+    # 如不能匹配，则返回NO_Matched_Action
+def action_match(analyze_file,User_full_name,type, opposite,side,symbool):
+    result = analyze_file
+    result = result.loc[(result['User_full_name'] == User_full_name) & (result['原始凭证类型'] == type) & (result['原始凭证类型'] == type) & (result['交易对手方'] == opposite) & (result['交易方向'] == side) & (result['交易标的'] == symbool)]
+    result = result.reset_index(drop=True)
+    if len(result['操作']) == 1:
+        return result['操作'][0]
+    else:
+        result = 'NO_Matched_Action_原始凭证类型=%s_交易方向=%s_交易标的=%s' %(type, side, symbool)
+        return result
+
 # 定义银行回单表操作类
 class MySQL_action_bank_receipt_abc(Base_Action):
     def __init__(self,Data):
@@ -137,6 +153,83 @@ class MySQL_action_execution(Base_Action):
         self.data.delete_sql(sql=delete_execution_sql)
         logger.info('【删除该公司当前账期下全部的银行回单交易数据：完成】')
 
+    # 遍历每一笔交易,根据逻辑表判断对应的操作,在操作表中打上操作代码
+    def action_match_v0001(self,execution,analyze_file):
+        # 遍历每一笔交易,根据逻辑表判断对应的操作
+        logger.info('【匹配操作v0001：开始】')
+        df = execution
+        # 该函数逻辑为，根据每一笔交易中的元素，查找对应的逻辑
+        # 示例：
+        # 当前交易为银行流水，用户收到一笔来在XXXX公司的款项，随后查找有无逻辑可同时满足上述的用户，原始凭证类型，交易对手方，交易方向。
+        # 如能够匹配，则返回逻辑记录的操作ID
+        # 如不能匹配，则返回NO_Matched_Action
+        df['操作'] = df.apply(lambda x : action_match(analyze_file=analyze_file,User_full_name=x['User_full_name'],type=x['原始凭证类型'],opposite=x['交易对手方'],side=x['交易方向'],symbool=x['交易标的']), axis=1)
+        # 删除execution表中同公司同账期全部的银行回单交易数据
+        self.delete_All_Data()
+        # 将计算结果插入execution表中
+        self.data.insert_sql(df=df, tablename='execution')
+        logger.info('【匹配操作v0001：结束】')
+        return df
+
+    # 定义凭证编号列处理函数
+    def aapz_number(self,df):
+        logger.info('【凭证编号处理：开始】')
+        Current_number = input('请输入当前已有凭证的最新编号（生成凭证从下一号开始）：')
+        logger.info('当前已有凭证的最新编号（生成凭证从下一号开始）：%s' %Current_number)
+        Current_number = int(Current_number) + 1
+        if self.aapz_number_type == 'default':
+            df['凭证编号'] = df.index.tolist()
+            # 记账凭证编号处理成 ‘ 1-XXXX’的格式
+            df['凭证编号'] = df.apply(lambda x : ' 1-'+str(int(x['凭证编号']) + Current_number).zfill(4), axis=1)
+        if self.aapz_number_type == 'bank_in_day':
+            # 获取前一条凭证的类型和交易日期
+            list_aapz_type = df['原始凭证类型'].to_list()
+            list_aapz_type.insert(0,'0')
+            del list_aapz_type[-1]
+            df['前一条凭证类型'] = list_aapz_type
+            list_aapz_date = df['交易时间'].to_list()
+            list_aapz_date.insert(0,'19000101')
+            del list_aapz_date[-1]
+            df['前一条日期'] = list_aapz_date
+            # 定义凭证编号生成方法01
+            # 如果该交易原始凭证不是银行回单，编号+1；
+            # 如果是银行回单，但前一条凭证不是银行回单，编号+1；
+            # 如果是银行回单，前一条凭证是银行回单，当前日期与前一条日期不是同一天，编号+1；
+            # 如果是银行回单，前一条凭证是银行回单，当前日期与前一条日期是同一天，编号不变
+            def aapz_number_funshion01(type,type_before,date,date_before):
+                if type != '1':
+                    result = 1
+                else:
+                    if type_before != '1':
+                        result = 1
+                    else:
+                        if date != date_before:
+                            result = 1
+                        else:
+                            result = 0
+                return result
+            df['凭证编号增量'] = df.apply(lambda x:aapz_number_funshion01(type=x['原始凭证类型'], type_before=x['前一条凭证类型'], date=x['交易时间'], date_before=x['前一条日期']),axis=1)
+            list_aapz_increase = df['凭证编号增量'].to_list()
+            list_aapz_number = [0]
+            i = 1
+            while i < len(list_aapz_increase):
+                aapz_number = list_aapz_increase[i] + list_aapz_number[i-1]
+                list_aapz_number.append(aapz_number)
+                i = i + 1
+            df['凭证编号'] = list_aapz_number
+            df = df.drop(['凭证编号增量'], axis=1)
+            df = df.drop(['前一条日期'], axis=1)
+            df = df.drop(['前一条凭证类型'], axis=1)
+
+            # 记账凭证编号处理成 ‘ 1-XXXX’的格式
+            df['凭证编号'] = df.apply(lambda x : ' 1-'+str(int(x['凭证编号']) + Current_number).zfill(4), axis=1)
+        # 删除execution表中同公司同账期全部的银行回单交易数据
+        self.delete_All_Data()
+        # 将计算结果插入execution表中
+        self.data.insert_sql(df=df, tablename='execution')
+        logger.info('【凭证编号处理：结束】')
+        return df
+
 # 定义科目表操作类
 class MySQL_action_balance(Base_Action):
     def __init__(self, Data):
@@ -236,3 +329,33 @@ class MySQL_action_action(Base_Action):
         logger.info('【提取该公司全部的操作表数据：完成】')
         return action_file
 
+# 定义aapz记账凭证表操作类
+class MySQL_action_aapz(Base_Action):
+    def __init__(self, Data):
+        super().__init__(Data)
+    # 删除该公司当前账期下全部的科目表数据
+    def delete_All_Data(self):
+        logger.info('【删除该公司当前账期下全部的记账凭证数据：开始】')
+        # 生成sql查询语句
+        sql = "DELETE FROM auto_account.aapz where User_full_name = '{User}' and Time = {date}"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        sql = sql.format(User=self.user, date=self.date)
+        # 执行sql语句
+        self.data.delete_sql(sql=sql)
+        logger.info('【删除该公司当前账期下全部的记账凭证数据：完成】')
+
+    # 定义方法，先删除再插入,以实现更新效果
+    def insert_after_delete(self,df):
+        self.delete_All_Data()
+        self.data.insert_sql(df=df, tablename='aapz')
+
+    # 提取该公司该账期下全部的记账凭证数据
+    def get_All_Data(self):
+        logger.info('【提取该公司全部的记账凭证数据：开始】')
+        # 生成sql查询语句
+        sql = "select * from aapz where User_full_name = '{User}' and Time = {date}"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        sql = sql.format(User=self.user, date=self.date)
+        aapz = self.data.load_sql(sql=sql)
+        logger.info('【提取该公司全部的记账凭证数据：完成】')
+        return aapz
