@@ -79,3 +79,6 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Produce_aapz_action.aapz = self.MySQL_action_aapz.get_All_Data()
         self.Produce_aapz_action.aapz_out_put(FolderName_dic=FolderName_dic)
 
+        # 统计输出的记账凭证中，未匹配到操作结果的数量和占比
+        self.Verification.execution = execution_file
+        self.Verification.count_NO_Matched_Action()

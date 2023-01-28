@@ -21,3 +21,16 @@ class Verification(Base_Action):
                 self.bank_account = df['Bank_account'][0]
                 logger.info('【用户校验结果：校验通过】')
         return df
+
+    # 统计交易中，未匹配到操作结果的数量和占比
+    def count_NO_Matched_Action(self):
+        count_execution = len(self.execution)
+        df = self.execution
+        no_matched_action = df.loc[df['操作'].str.contains('NO_Matched_Action')]
+        count_no_matched_action = len(no_matched_action)
+        percent_result = round(count_no_matched_action/count_execution*100,2)
+        percent_result = str(percent_result)+'%'
+        logger.info('current time:%s\ncurrent user:%s\n' % (self.date, self.user))
+        logger.info('本次分析统计到的所有交易笔数:%s' % (count_execution))
+        logger.info('本次分析统计到的未匹配交易笔数:%s' % (count_no_matched_action))
+        logger.info('本次分析未匹配交易笔数占比:%s' % (percent_result))
