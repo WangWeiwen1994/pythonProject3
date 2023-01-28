@@ -4,11 +4,87 @@ from .base import Base_Action
 from logger import logger
 import pandas as pd
 import math
+import copy
 
+
+# 对输入的字符串，每两个字符进行截取
+# 示例
+# name = '上海晨光科力普办公用品有限公司'
+# result = ['上海', '海晨', '晨光', '光科', '科力', '力普', '普办', '办公', '公用', '用品', '品有', '有限', '限公', '公司']
+def slice(name):
+    a = 0
+    b = 2
+    l = len(name)
+    result = []
+    while a < l - 1:
+        result.append(name[a:b])
+        a = a + 1
+        b = b + 1
+    return result
+
+
+# 计算输入的两个字符串，两个字符串去重后重合元素的数量
+# 示例
+# a = ['上海', '海晨', '晨光', '光科', '科力', '力普', '普办', '办公', '公用', '用品', '品有', '有限', '限公', '公司']
+# b = ['晨光', '光科', '科力', '力普', '普（', '（上', '上海', '海）', '）办', '办公', '公用', '用品', '品有', '有限', '限公', '公司']
+# result = 12
+
+def inner_count(a, b):
+    set_c = set(a) & set(b)
+    list_c = list(set_c)
+    result = len(list_c)
+    return result
 
 class Produce_aapz_action(Base_Action):
     def __init__(self,Data):
         super().__init__(Data)
+
+
+    # 提取数据库中已有的名称对照表信息
+    def get_name_comparative_file(self):
+        get_name_comparative_file = "select * from auto_account.name_comparative_table where User_full_name = '{User}'"
+        get_name_comparative_file = get_name_comparative_file.format(User=self.user)
+        logger.info('提取数据库中已有的名称对照表信息')
+        self.name_comparative_file = self.data.load_sql(sql = get_name_comparative_file)
+
+    # 该方法用于对公司名称进行处理，找到科目余额表中对应的科目
+    def find_name(self, name, JFKM):
+        Full_Name = copy.copy(name)
+
+        # 读取配置文件中的高频词，对输入的名称进行去除，提高准确率
+        HF_words = self.data.High_frequency_words
+        HF_words = HF_words.split(',')
+        for word in HF_words:
+            name = name.replace(word, '')
+
+        # 将去除高频词的名称进行分解
+        name = slice(name)
+
+        # 与科目余额表中的名称进行比对，找出重合度最高的数据
+        balance_file = self.balance_file
+        # 对JFKM字段中，取前4位（即借方科目），进行筛选
+        balance_file = balance_file[balance_file['JFKM'].map(lambda x: x[0:4]) == JFKM]
+        balance_file['cal'] = balance_file['KMMC'].apply(lambda x: slice(x))
+        balance_file['cal_count'] = balance_file['cal'].apply(lambda x: inner_count(name, x))
+        max_count = balance_file['cal_count'].max()
+        result = balance_file.loc[balance_file['cal_count'] == max_count]
+        result = result[['User_full_name', 'JFKM', 'DFKM', 'KMMC']]
+        result['Full_Name'] = Full_Name
+        result['一级科目'] = result.apply(lambda x: x['JFKM'][0:4], axis=1)
+        result = result[0:5]
+        result = result.reset_index(drop=True)
+        logger.info('请输入对应的行号，无对应结果请输入N\n查询结果如下:')
+        logger.info(result)
+        r = input()
+        if r == 'N':
+            result = pd.DataFrame()
+            logger.info(Full_Name + '当前无对应科目')
+        else:
+            result = result.loc[r:r]
+            logger.info(Full_Name + '找到对应关系')
+            self.data.insert_sql(df=result, tablename='name_comparative_table')
+        return result
+
 
     # 该函数用于生成凭证数据
     # 首先对交易表和操作表进行左连接
