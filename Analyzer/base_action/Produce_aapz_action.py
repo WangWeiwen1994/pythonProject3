@@ -97,7 +97,7 @@ class Produce_aapz_action(Base_Action):
         # 根据操作中配置的取值字段，读取对应的每一行取值数据
         result['取值'] = result.apply(lambda x:x[x['取值']],axis=1)
         # 提取生成凭证涉及的字段，去除无关字段
-        result = result[['User_full_name','Time','交易对手方','交易时间','交易方向','备注','凭证编号','HS','ZY','JFKM','JFMC','JFJE','DFJE','取值','是否关联二级科目']]
+        result = result[['User_full_name','Time','交易对手方','交易时间','交易方向','备注','凭证编号','HS','ZY','JFKM','JFMC','JFJE','DFJE','取值','是否关联二级科目','二级科目','二级科目名称']]
         # 生成凭证中的日期格式 20220630 变为 2022/6/30
         def funshion_01(time):
             year = time[0:4]
@@ -117,28 +117,35 @@ class Produce_aapz_action(Base_Action):
         result['LSBH'] = result.apply(lambda x: int(x['凭证编号'].replace(' 1-','')), axis=1)
 
         # 第一次清洗，根据借方科目代码和交易对手方，在比对表中查找对应的二级明细科目和科目名称
-        def funshion_02(jfkm,opposite):
-            result = self.name_comparative_file
-            result = result.loc[result['一级科目'] == jfkm]
-            result = result.loc[result['Full_Name'] == opposite]
-            result = result.reset_index(drop=True)
-            if result.empty:
-                result = '未找到对应值'
+        def funshion_02(jfkm,opposite,ejkm):
+            if ejkm == '未找到对应值':
+                result = self.name_comparative_file
+                result = result.loc[result['一级科目'] == jfkm]
+                result = result.loc[result['Full_Name'] == opposite]
+                result = result.reset_index(drop=True)
+                if result.empty:
+                    result = '未找到对应值'
+                else:
+                    result = result['JFKM'][0]
+                return result
             else:
-                result = result['JFKM'][0]
-            return result
-        result['二级科目'] = result.apply(lambda x: funshion_02(jfkm=x['JFKM'], opposite=x['交易对手方']), axis=1)
-        def funshion_03(jfkm,opposite):
-            result = self.name_comparative_file
-            result = result.loc[result['一级科目'] == jfkm]
-            result = result.loc[result['Full_Name'] == opposite]
-            result = result.reset_index(drop=True)
-            if result.empty:
-                result = '未找到对应值'
+                result = ejkm
+                return result
+        result['二级科目'] = result.apply(lambda x: funshion_02(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']), axis=1)
+        def funshion_03(jfkm,opposite,kmmc):
+            if kmmc == '未找到对应值':
+                result = self.name_comparative_file
+                result = result.loc[result['一级科目'] == jfkm]
+                result = result.loc[result['Full_Name'] == opposite]
+                result = result.reset_index(drop=True)
+                if result.empty:
+                    result = '未找到对应值'
+                else:
+                    result = result['KMMC'][0]
+                return result
             else:
-                result = result['KMMC'][0]
-            return result
-        result['二级科目名称'] = result.apply(lambda x: funshion_03(jfkm=x['JFKM'], opposite=x['交易对手方']), axis=1)
+                return kmmc
+        result['二级科目名称'] = result.apply(lambda x: funshion_03(jfkm=x['JFKM'], opposite=x['交易对手方'],kmmc=x['二级科目名称']), axis=1)
 
         # 第二次清洗，从用户信息表中获取给定的科目取值，根据给定的科目替换取值
         # 举例 银行科目在用户信息中已给出，将该科目名称写入二级科目中
@@ -207,6 +214,13 @@ class Produce_aapz_action(Base_Action):
         result = result.rename(columns={'凭证编号': 'BH'})
         logger.info('【生成记账凭证：完成】')
         return result
+
+    # 开发中
+    # 重新编写的记账凭证生成方法
+    # 该函数用于生成凭证数据
+    # 首先对交易表和操作表进行左连接
+    # 随后对结果进行清洗，主要是计算金额和查找对应二级科目
+    # 接着将凭证整理成记账凭证的格式插入到aapz表中
 
     # 该函数用于生成输出的记账凭证数据，返回结果为一个df并输出一个EXCEL
     def aapz_out_put(self, FolderName_dic):
