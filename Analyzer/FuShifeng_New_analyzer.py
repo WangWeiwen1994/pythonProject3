@@ -51,13 +51,23 @@ class FuShifeng_New_analyzer(Base_Action_dic):
 
 
 
-        # 该部分流程须修改。做成一个新的方法类，返回结果插入execution表中
 
-        # 调用匹配逻辑v0001,为execution表中的操作列赋值,返回处理后的execution
-        execution_file = self.MySQL_action_execution.action_match_v0001(execution=execution_file,analyze_file=analyze_file)
 
-        # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，插入execution表中，返回处理后的execution
-        execution_file = self.MySQL_action_execution.aapz_number(execution_file)
+        # 调用匹配逻辑v0001,为execution表中的操作列赋值,计算结果直接修改对应的属性值
+        self.Match_action_analyze.execution = execution_file
+        self.Match_action_analyze.analyze = analyze_file
+        self.Match_action_analyze.action_match_v0001()
+
+        # 从用户信息表中提取工资账户信息，调用工资匹配v0001逻辑为操作列赋值，结算结果直接修改对应的属性值
+        Salary_Bankaccount = self.MySQL_action_user_information.get_Salary_Bankaccount()
+        self.Match_action_analyze.salary_match_v0001(Salary_Bankaccount=Salary_Bankaccount)
+
+        # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，返回处理后的execution
+        # 该部分流程考虑修改。目前放在MySQL_action中，可能需要单独做一个类
+        execution_file = self.MySQL_action_execution.aapz_number(self.Match_action_analyze.execution)
+
+        # execution表处理完成，插入数据库中
+        self.MySQL_action_execution.insert_after_delete(df=execution_file)
 
         # 生成记账凭证（调用该方法需要先传入计算数据到属性中）
         self.Produce_aapz_action.balance_file = balance_file

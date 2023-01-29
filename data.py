@@ -59,3 +59,20 @@ class Data():
             logger.info('执行删除语句成功%s',sql)
         except:
             logger.info('执行删除语句失败%s',sql)
+
+
+    # 在指定表中，根据指定ID，将指定列修改成指定值
+    def modify_sql(self,table,ID,column,value):
+        # 对于输入的value值，需要根据数据类型进行处理
+        # 若为字符串格式，需要在首尾增加单引号
+        if isinstance(value,str):
+            value = "'" + value + "'"
+        sql = "update {table} set {column} = {value} where ID = {ID}"
+        sql = sql.format(table=table, column=column, value=value, ID=ID)
+        if self.engine == None:
+            self.get_sql_engine()
+        try:
+            self.engine.execute(sql)
+            logger.info('执行修改语句成功%s',sql)
+        except:
+            logger.info('执行修改语句失败%s',sql)

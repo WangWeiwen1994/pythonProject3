@@ -19,6 +19,7 @@ def read_DBF(filename):
     return df
 
 # 根据输入的条件，在分析逻辑表中筛选出相应的操作代码
+# 已移植到到Match_action_analyze中，待删除
     # 该函数逻辑为，根据每一笔交易中的元素，查找对应的逻辑
     # 示例：
     # 当前交易为银行流水，用户收到一笔来在XXXX公司的款项，随后查找有无逻辑可同时满足上述的用户，原始凭证类型，交易对手方，交易方向。
@@ -154,6 +155,7 @@ class MySQL_action_execution(Base_Action):
         logger.info('【删除该公司当前账期下全部的银行回单交易数据：完成】')
 
     # 遍历每一笔交易,根据逻辑表判断对应的操作,在操作表中打上操作代码
+    # 已移植到到Match_action_analyze中，待删除
     def action_match_v0001(self,execution,analyze_file):
         # 遍历每一笔交易,根据逻辑表判断对应的操作
         logger.info('【匹配操作v0001：开始】')
@@ -229,6 +231,11 @@ class MySQL_action_execution(Base_Action):
         self.data.insert_sql(df=df, tablename='execution')
         logger.info('【凭证编号处理：结束】')
         return df
+
+    # 定义方法，先删除再插入,以实现更新效果
+    def insert_after_delete(self,df):
+        self.delete_All_Data()
+        self.data.insert_sql(df=df, tablename='execution')
 
 # 定义科目表操作类
 class MySQL_action_balance(Base_Action):
@@ -359,3 +366,31 @@ class MySQL_action_aapz(Base_Action):
         aapz = self.data.load_sql(sql=sql)
         logger.info('【提取该公司全部的记账凭证数据：完成】')
         return aapz
+
+
+# 定义银行回单表操作类
+class MySQL_action_user_information(Base_Action):
+    def __init__(self,Data):
+        super().__init__(Data)
+
+    # 提取该公司全部的银行回单数据
+    def get_All_Data(self):
+        logger.info('【提取该公司全部的用户信息：开始】')
+        # 生成sql查询语句
+        sql = "select * from user_information where User_full_name = '{User}'"
+        # 将属性中的当前用户和账期信息传入sql语句中
+        sql = sql.format(User=self.user)
+        # 执行sql语句
+        df = self.data.load_sql(sql=sql)
+        logger.info('【提取该公司全部的用户信息：完成】')
+        return df
+
+    # 提取该公司工资账户信息
+    def get_Salary_Bankaccount(self):
+        logger.info('【提取该公司工资发放账户：开始】')
+        df = self.get_All_Data()
+        result = df['Salary_Bankaccount'][0]
+        result = result.split(',')
+        logger.info('该公司工资发放账户信息：%s' % result)
+        logger.info('【提取该公司工资发放账户：完成】')
+        return result
