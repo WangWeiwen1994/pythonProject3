@@ -51,11 +51,20 @@ class Match_action_analyze(Base_Action):
         df = self.execution
         # 筛选原始凭证为银行回单,对手方是工资发放账户，交易方向为付款，且备注中包含关键词'工资'的数据,赋操作值ACTION_000000007
         df.loc[(df['User_full_name']==self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (df['备注'].str.contains('工资')) & (df.交易对手方.isin(Salary_Bankaccount)),('操作')] = 'ACTION_000000007'
-
-
         logger.info('【工资匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
+    # 该方法对凭证为银行回单，交易方向为付款，对手方为空，包含关键词‘手续费’、‘短信费’等交易，判断为支付手续费，并赋操作值ACTION_000000006
+    # keyword_list为一个列表，列表元素为包含的关键词，增加关键词在base的对应属性self.keyword_list中增加。
+    def Service_Charge_match_v0001(self):
+        logger.info('【手续费匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = self.keyword_list
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
+                df['备注'].str.contains(keyword)) & (df['交易对手方'].isnull()), ('操作')] = 'ACTION_000000006'
 
-
+        logger.info('【手续费匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df

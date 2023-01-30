@@ -42,3 +42,5 @@ class Base_Action():
         self.FolderName_dic = None
         # 'default' or 'bank in day'，生成凭证编号时,默认每一笔数据生成一张凭证，可选择将银行回单数据按天汇总
         self.aapz_number_type = Data.aapz_number_type
+        # 定义手续费匹配的关键词列表
+        self.keyword_list = ['手续费','短信费','回单费']

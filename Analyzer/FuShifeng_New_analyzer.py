@@ -58,9 +58,12 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Match_action_analyze.analyze = analyze_file
         self.Match_action_analyze.action_match_v0001()
 
-        # 从用户信息表中提取工资账户信息，调用工资匹配v0001逻辑为操作列赋值，结算结果直接修改对应的属性值
+        # 从用户信息表中提取工资账户信息，调用工资匹配v0001逻辑为操作列赋值，结算结果直接修改对应的属性值self.Match_action_analyze.execution
         Salary_Bankaccount = self.MySQL_action_user_information.get_Salary_Bankaccount()
         self.Match_action_analyze.salary_match_v0001(Salary_Bankaccount=Salary_Bankaccount)
+
+        # 调用手续费匹配逻辑v0001,结算结果直接修改对应的属性值self.Match_action_analyze.execution
+        self.Match_action_analyze.Service_Charge_match_v0001()
 
         # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，返回处理后的execution
         # 该部分流程考虑修改。目前放在MySQL_action中，可能需要单独做一个类
@@ -79,8 +82,6 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Produce_aapz_action.bank_account = user_info['Bank_account'][0]
         aapz = self.Produce_aapz_action.aapz_manager()
 
-        #logger.info(aapz)
-        #aapz.to_sql('auto_account.aapz', con=self.engine, if_exists='append', index=False, dtype=None)
 
         # 记账凭证插入aapz表中
         self.MySQL_action_aapz.insert_after_delete(df=aapz)
