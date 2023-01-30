@@ -173,64 +173,6 @@ class MySQL_action_execution(Base_Action):
         logger.info('【匹配操作v0001：结束】')
         return df
 
-    # 定义凭证编号列处理函数
-    def aapz_number(self,df):
-        logger.info('【凭证编号处理：开始】')
-        Current_number = input('请输入当前已有凭证的最新编号（生成凭证从下一号开始）：')
-        logger.info('当前已有凭证的最新编号（生成凭证从下一号开始）：%s' %Current_number)
-        Current_number = int(Current_number) + 1
-        if self.aapz_number_type == 'default':
-            df['凭证编号'] = df.index.tolist()
-            # 记账凭证编号处理成 ‘ 1-XXXX’的格式
-            df['凭证编号'] = df.apply(lambda x : ' 1-'+str(int(x['凭证编号']) + Current_number).zfill(4), axis=1)
-        if self.aapz_number_type == 'bank_in_day':
-            # 获取前一条凭证的类型和交易日期
-            list_aapz_type = df['原始凭证类型'].to_list()
-            list_aapz_type.insert(0,'0')
-            del list_aapz_type[-1]
-            df['前一条凭证类型'] = list_aapz_type
-            list_aapz_date = df['交易时间'].to_list()
-            list_aapz_date.insert(0,'19000101')
-            del list_aapz_date[-1]
-            df['前一条日期'] = list_aapz_date
-            # 定义凭证编号生成方法01
-            # 如果该交易原始凭证不是银行回单，编号+1；
-            # 如果是银行回单，但前一条凭证不是银行回单，编号+1；
-            # 如果是银行回单，前一条凭证是银行回单，当前日期与前一条日期不是同一天，编号+1；
-            # 如果是银行回单，前一条凭证是银行回单，当前日期与前一条日期是同一天，编号不变
-            def aapz_number_funshion01(type,type_before,date,date_before):
-                if type != '1':
-                    result = 1
-                else:
-                    if type_before != '1':
-                        result = 1
-                    else:
-                        if date != date_before:
-                            result = 1
-                        else:
-                            result = 0
-                return result
-            df['凭证编号增量'] = df.apply(lambda x:aapz_number_funshion01(type=x['原始凭证类型'], type_before=x['前一条凭证类型'], date=x['交易时间'], date_before=x['前一条日期']),axis=1)
-            list_aapz_increase = df['凭证编号增量'].to_list()
-            list_aapz_number = [0]
-            i = 1
-            while i < len(list_aapz_increase):
-                aapz_number = list_aapz_increase[i] + list_aapz_number[i-1]
-                list_aapz_number.append(aapz_number)
-                i = i + 1
-            df['凭证编号'] = list_aapz_number
-            df = df.drop(['凭证编号增量'], axis=1)
-            df = df.drop(['前一条日期'], axis=1)
-            df = df.drop(['前一条凭证类型'], axis=1)
-
-            # 记账凭证编号处理成 ‘ 1-XXXX’的格式
-            df['凭证编号'] = df.apply(lambda x : ' 1-'+str(int(x['凭证编号']) + Current_number).zfill(4), axis=1)
-        # 删除execution表中同公司同账期全部的银行回单交易数据
-        self.delete_All_Data()
-        # 将计算结果插入execution表中
-        self.data.insert_sql(df=df, tablename='execution')
-        logger.info('【凭证编号处理：结束】')
-        return df
 
     # 定义方法，先删除再插入,以实现更新效果
     def insert_after_delete(self,df):
