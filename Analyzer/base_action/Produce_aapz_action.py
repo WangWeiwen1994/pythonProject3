@@ -190,7 +190,7 @@ class Produce_aapz_action(Base_Action):
         # 如果凭证采用默认方式编号，即一条交易一张凭证，则不用处理'HS'行数数据。
         # 如果凭证采用银行回单按天汇总的编号，则需要处理'HS'行数数据。
         # 处理逻辑为，同一编号内的行数重新编号
-        if self.aapz_number_type == 'bank_in_day':
+        if self.aapz_number_type == 'day-action-opposite':
             list_BH = result['凭证编号'].to_list()
             list_HS = [1]
             i = 1

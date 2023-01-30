@@ -5,6 +5,7 @@ class FuShifeng_New_analyzer(Base_Action_dic):
     def __init__(self,Data):
         super().__init__(Data)
     def analyzer(self):
+    # 该阶段为准备阶段，包括读取任务文件，提取计算需要的信息等。
         # 输出当前环境配置信息
         logger.info('\ncurrent environment:%s\ncurrent time:%s\ncurrent user:%s\n' %(self.filename,self.date,self.user))
 
@@ -48,11 +49,9 @@ class FuShifeng_New_analyzer(Base_Action_dic):
 
         # 提取数据库中的操作信息表全部数据
         action_file = self.MySQL_action_action.get_All_Data()
+    # 准备阶段结束
 
-
-
-
-
+    # execution表处理，目标是生成execution表的操作列和凭证编号列
         # 调用匹配逻辑v0001,为execution表中的操作列赋值,计算结果直接修改对应的属性值
         self.Match_action_analyze.execution = execution_file
         self.Match_action_analyze.analyze = analyze_file
@@ -66,12 +65,22 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Match_action_analyze.Service_Charge_match_v0001()
 
         # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，返回处理后的execution
+        # 根据输入参数来判断编号方法
+        if self.aapz_number_type == 'default':
+            execution_file = self.Match_action_analyze.make_aapz_nume_default_tpye()
+        if self.aapz_number_type == 'day-action-opposite':
+            execution_file = self.Match_action_analyze.make_aapz_nume_day_action_opposite_tpye()
+
+
+
         # 该部分流程考虑修改。目前放在MySQL_action中，可能需要单独做一个类
-        execution_file = self.MySQL_action_execution.aapz_number(self.Match_action_analyze.execution)
+        # execution_file = self.MySQL_action_execution.aapz_number(self.Match_action_analyze.execution)
 
         # execution表处理完成，插入数据库中
         self.MySQL_action_execution.insert_after_delete(df=execution_file)
+    # execution表处理结束
 
+    # 生成记账凭证，存在数据库aapz表同时，也输出一份excel
         # 生成记账凭证（调用该方法需要先传入计算数据到属性中）
         self.Produce_aapz_action.balance_file = balance_file
         self.Produce_aapz_action.execution = execution_file

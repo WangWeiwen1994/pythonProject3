@@ -4,7 +4,7 @@
 # 使用固定逻辑（如通过银行流水中是否包含关键词）进行匹配
 # 2 根据科目余额表中的已有科目（应收账款，应付账款）进行判断的：
 # 该类方法需要先查找对应关系，同时若可提炼出符合现有路径的逻辑的，需要补充到逻辑表中
-
+import pandas as pd
 
 from .base import Base_Action
 from logger import logger
@@ -68,3 +68,93 @@ class Match_action_analyze(Base_Action):
         logger.info('【手续费匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
+
+    def make_aapz_nume_default_tpye(self):
+        logger.info('【凭证编号处理：默认排序方式，开始】')
+        Current_number = input('请输入当前已有凭证的最新编号（生成凭证从下一号开始）：')
+        logger.info('当前已有凭证的最新编号（生成凭证从下一号开始）：%s' %Current_number)
+        Current_number = int(Current_number) + 1
+        # 获取当前的execution表，按照'操作','交易对手方','交易时间'进行排序,并重置索引
+        df = self.execution
+        df = df.sort_values(by=['操作','交易对手方','交易时间'])
+        df = df.reset_index(drop=True)
+        # 遍历数据，为凭证编号列赋值。
+        # 若当前操作为ACTION_000000001或ACTION_000000002，当交易对手方变化时编号加1
+        # 若当前操作为NO_Matched_Action，则一条数据一个编号
+        # 其他操作，当操作类型变化时编号加1
+        i = 0
+        df.loc[i:i,('凭证编号')] = ' 1-'+str(Current_number).zfill(4)
+        i = i + 1
+        while i < len(df):
+            if df['操作'][i] in ['ACTION_000000001','ACTION_000000002']:
+                if df['交易对手方'][i] != df['交易对手方'][i-1]:
+                    Current_number = Current_number + 1
+                    df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                else:
+                    df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+            else:
+                if df['操作'][i] in ['NO_Matched_Action_原始凭证类型=1_交易方向=付款_交易标的=无货物交易','NO_Matched_Action_原始凭证类型=1_交易方向=收款_交易标的=无货物交易']:
+                    Current_number = Current_number + 1
+                    df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                else:
+                    if df['操作'][i] != df['操作'][i - 1]:
+                        Current_number = Current_number + 1
+                        df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                    else:
+                        df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+            i = i + 1
+        logger.info('【凭证编号处理：默认排序方式，完成】')
+        # 更新属性值
+        self.execution = df
+        return self.execution
+
+
+    def make_aapz_nume_day_action_opposite_tpye(self):
+        logger.info('【凭证编号处理：日期-操作-对手方排序方式，开始】')
+        Current_number = input('请输入当前已有凭证的最新编号（生成凭证从下一号开始）：')
+        logger.info('当前已有凭证的最新编号（生成凭证从下一号开始）：%s' %Current_number)
+        Current_number = int(Current_number) + 1
+        # 获取当前的execution表，按照'操作','交易对手方','交易时间'进行排序,并重置索引
+        df = self.execution
+        df = df.sort_values(by=['交易时间','操作','交易对手方'])
+        df = df.reset_index(drop=True)
+        # 遍历数据，为凭证编号列赋值。
+        # 若当前操作为ACTION_000000001或ACTION_000000002，当交易对手方变化时编号加1
+        # 若当前操作为NO_Matched_Action，则一条数据一个编号
+        # 其他操作，当操作类型变化时编号加1
+        i = 0
+        df.loc[i:i,('凭证编号')] = ' 1-'+str(Current_number).zfill(4)
+        i = i + 1
+        while i < len(df):
+            if df['操作'][i] in ['ACTION_000000001','ACTION_000000002']:
+                if df['交易时间'][i] == df['交易时间'][i-1]:
+                    if df['操作'][i] == df['操作'][i-1]:
+                        if df['交易对手方'][i] == df['交易对手方'][i-1]:
+                            df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                        else:
+                            df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                    else:
+                        Current_number = Current_number + 1
+                        df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                else:
+                    Current_number = Current_number + 1
+                    df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+            else:
+                if df['操作'][i] in ['NO_Matched_Action_原始凭证类型=1_交易方向=付款_交易标的=无货物交易','NO_Matched_Action_原始凭证类型=1_交易方向=收款_交易标的=无货物交易']:
+                    Current_number = Current_number + 1
+                    df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                else:
+                    if df['交易时间'][i] == df['交易时间'][i-1]:
+                        if df['操作'][i] == df['操作'][i-1]:
+                            df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                        else:
+                            Current_number = Current_number + 1
+                            df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+                    else:
+                        Current_number = Current_number + 1
+                        df.loc[i:i, ('凭证编号')] = ' 1-' + str(Current_number).zfill(4)
+            i = i + 1
+        logger.info('【凭证编号处理：日期-操作-对手方排序方式，完成】')
+        # 更新属性值
+        self.execution = df
+        return self.execution
