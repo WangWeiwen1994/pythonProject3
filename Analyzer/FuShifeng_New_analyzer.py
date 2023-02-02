@@ -64,6 +64,12 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         # 调用手续费匹配逻辑v0001,结算结果直接修改对应的属性值self.Match_action_analyze.execution
         self.Match_action_analyze.Service_Charge_match_v0001()
 
+        # 调用提现匹配逻辑v0001,结算结果直接修改对应的属性值self.Match_action_analyze.execution
+        self.Match_action_analyze.Withdraw_match_v0001()
+
+        # 调用结息匹配逻辑v0001,结算结果直接修改对应的属性值self.Match_action_analyze.execution
+        self.Match_action_analyze.Interest_match_v0001()
+
         # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，返回处理后的execution
         # 根据输入参数来判断编号方法
         if self.aapz_number_type == 'default':

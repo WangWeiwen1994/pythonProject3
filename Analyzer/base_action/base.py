@@ -43,4 +43,8 @@ class Base_Action():
         # 'default' or 'bank in day'，生成凭证编号时,默认每一笔数据生成一张凭证，可选择将银行回单数据按天汇总
         self.aapz_number_type = Data.aapz_number_type
         # 定义手续费匹配的关键词列表
-        self.keyword_list = ['手续费','短信费','回单费']
+        self.Service_Charge_keyword_list = ['手续费','短信费','回单费']
+        # 定义提现匹配的关键词列表
+        self.Withdraw_Charge_keyword_list = ['报销', '提现', '备用金']
+        # 定义结息匹配的关键词列表
+        self.Interest_keyword_list = ['结息', '利息']
