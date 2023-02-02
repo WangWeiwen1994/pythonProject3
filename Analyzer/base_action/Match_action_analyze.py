@@ -94,6 +94,34 @@ class Match_action_analyze(Base_Action):
         # 更新属性值
         self.execution = df
 
+    # 新增支付货款匹配方法，凭证为银行回单，交易方向为付款，包含关键词‘货款’交易，匹配为支付货款，并赋操作值ACTION_000000002
+    def Payment_on_goods_match_v0001(self):
+        logger.info('【支付货款匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = self.Payment_on_goods_keyword_list
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
+                df['备注'].str.contains(keyword)), ('操作')] = 'ACTION_000000002'
+
+        logger.info('【支付货款匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def make_aapz_nume_default_tpye(self):
         logger.info('【凭证编号处理：默认排序方式，开始】')
         Current_number = input('请输入当前已有凭证的最新编号（生成凭证从下一号开始）：')

@@ -45,6 +45,8 @@ class Base_Action():
         # 定义手续费匹配的关键词列表
         self.Service_Charge_keyword_list = ['手续费','短信费','回单费']
         # 定义提现匹配的关键词列表
-        self.Withdraw_Charge_keyword_list = ['报销', '提现', '备用金']
+        self.Withdraw_Charge_keyword_list = ['报销', '提现', '备用金', '取现']
         # 定义结息匹配的关键词列表
         self.Interest_keyword_list = ['结息', '利息']
+        # 定义货款匹配的关键词列表
+        self.Payment_on_goods_keyword_list = ['货款']
