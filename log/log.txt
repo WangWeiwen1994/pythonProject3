@@ -546,3 +546,247 @@ current user:南京阜仕丰国际贸易有限公司
 2023-02-02 13:03:05,616 - Verification.py - INFO - 本次分析统计到的未匹配交易笔数:10
 2023-02-02 13:03:05,616 - Verification.py - INFO - 本次分析未匹配交易笔数占比:4.44%
 2023-02-02 13:03:05,616 - main.py - INFO - ---------------------------------FuShifeng_New_analyzer Finished----------------------------------
+2023-02-02 13:18:10,864 - main.py - INFO - --------------------------------------------------------------------------------------------------
+2023-02-02 13:18:10,864 - main.py - INFO - Start print log
+2023-02-02 13:18:10,866 - main.py - INFO - ----------------------------------Start to do FuShifeng_New_analyzer------------------------------
+2023-02-02 13:18:10,872 - FuShifeng_New_analyzer.py - INFO - 
+current environment:remote_config.ini
+current time:20220630
+current user:南京阜仕丰国际贸易有限公司
+
+2023-02-02 13:18:10,872 - Verification.py - INFO - 【用户校验：开始】：
+2023-02-02 13:18:10,918 - data.py - INFO - 当前数据库连接url:
+mysql+pymysql://www:Wang-684257913@localhost:3306/auto_account?charset=utf8mb4
+2023-02-02 13:18:10,932 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.user_information where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:18:10,932 - data.py - INFO - 返回数据条数:1条;
+2023-02-02 13:18:10,932 - Verification.py - INFO - 【用户校验结果：校验通过】
+2023-02-02 13:18:10,932 - Interaction.py - INFO - 【开始创建任务文件夹】：
+2023-02-02 13:18:10,932 - Interaction.py - INFO - 已创建任务文件夹，路径为：
+D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_2023-02-02-13_18_10
+2023-02-02 13:18:10,933 - Interaction.py - INFO - 【任务文件夹创建完毕】
+2023-02-02 13:18:14,872 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的银行回单数据：开始】
+2023-02-02 13:18:14,881 - data.py - INFO - 执行sql语句成功:
+select * from bank_receipt_abc where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:18:14,881 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:18:14,881 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的银行回单数据：完成】
+2023-02-02 13:18:14,881 - FuShifeng_New_analyzer.py - INFO - 数据库中已查询到银行回单信息225条，直接使用
+2023-02-02 13:18:14,882 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：开始】
+2023-02-02 13:18:14,897 - data.py - INFO - 执行删除语句成功DELETE from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630 and 原始凭证类型 = '1'
+2023-02-02 13:18:14,897 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：完成】
+2023-02-02 13:18:14,897 - MySQL_action.py - INFO - 【查询当前公司当前账期的农业银行回单数据，抽取到execution表：开始】
+2023-02-02 13:18:14,902 - data.py - INFO - 执行sql语句成功:
+ SELECT                
+                     User_full_name                
+                    ,Time                
+                    ,'1' as 原始凭证类型                
+                    ,ID as 原始凭证ID                
+                    ,concat('ABC_',Trade_log) as 回单流水号                
+                    ,Trade_Account_Name as 交易对手方
+                    ,Trade_Time as 交易时间               
+                    ,IF(Income_Amount <> 0,'收款','付款') as 交易方向                
+                    ,IF(Income_Amount <> 0,Income_Amount,Expend_Amount) as 交易金额                
+                    ,'无货物交易' as 交易标的                
+                    ,concat(ifnull(Trade_Description,''),ifnull(Trade_Summary,''),ifnull(Trade_Postscript,'') ) as 备注                
+                FROM auto_account.bank_receipt_abc 
+                WHERE User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:18:14,902 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:18:14,920 - data.py - INFO - 执行插入语句成功，插入表格:execution,插入数据225条
+2023-02-02 13:18:14,920 - MySQL_action.py - INFO - 【查询当前公司当前账期的农业银行回单数据，抽取到execution表：结束】
+2023-02-02 13:18:14,920 - MySQL_action.py - INFO - 【从任务文件夹读取科目表：开始】
+2023-02-02 13:18:14,920 - MySQL_action.py - INFO - 未读取到科目表信息
+2023-02-02 13:18:14,920 - MySQL_action.py - INFO - 【从任务文件夹读取科目表：完成】
+2023-02-02 13:18:14,920 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的科目表数据：开始】
+2023-02-02 13:18:14,938 - data.py - INFO - 执行sql语句成功:
+select * from balance where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:18:14,938 - data.py - INFO - 返回数据条数:1440条;
+2023-02-02 13:18:14,938 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的科目表数据：完成】
+2023-02-02 13:18:14,938 - MySQL_action.py - INFO - 【提取该公司全部的公司名称对照表数据：开始】
+2023-02-02 13:18:14,940 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.name_comparative_table where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:18:14,940 - data.py - INFO - 返回数据条数:89条;
+2023-02-02 13:18:14,940 - MySQL_action.py - INFO - 【提取该公司全部的公司名称对照表数据：完成】
+2023-02-02 13:18:14,940 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的交易表数据：开始】
+2023-02-02 13:18:14,948 - data.py - INFO - 执行sql语句成功:
+select * from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:18:14,948 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:18:14,948 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的交易表数据：完成】
+2023-02-02 13:18:14,948 - MySQL_action.py - INFO - 【提取该公司全部的分析逻辑表数据：开始】
+2023-02-02 13:18:14,951 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.analyze where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:18:14,951 - data.py - INFO - 返回数据条数:81条;
+2023-02-02 13:18:14,951 - MySQL_action.py - INFO - 【提取该公司全部的分析逻辑表数据：完成】
+2023-02-02 13:18:14,951 - MySQL_action.py - INFO - 【提取该公司全部的操作表数据：开始】
+2023-02-02 13:18:14,953 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.action;
+2023-02-02 13:18:14,953 - data.py - INFO - 返回数据条数:20条;
+2023-02-02 13:18:14,953 - MySQL_action.py - INFO - 【提取该公司全部的操作表数据：完成】
+2023-02-02 13:18:14,953 - Match_action_analyze.py - INFO - 【匹配操作v0001：开始】
+2023-02-02 13:18:15,085 - Match_action_analyze.py - INFO - 【匹配操作v0001：结束】
+2023-02-02 13:18:15,085 - MySQL_action.py - INFO - 【提取该公司工资发放账户：开始】
+2023-02-02 13:18:15,085 - MySQL_action.py - INFO - 【提取该公司全部的用户信息：开始】
+2023-02-02 13:18:15,087 - data.py - INFO - 执行sql语句成功:
+select * from user_information where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:18:15,087 - data.py - INFO - 返回数据条数:1条;
+2023-02-02 13:18:15,087 - MySQL_action.py - INFO - 【提取该公司全部的用户信息：完成】
+2023-02-02 13:18:15,087 - MySQL_action.py - INFO - 该公司工资发放账户信息：['邓惠欣', '蔡迟', '郑晓晨', '汪芳', '颜金来', '余锁', '龚迎喜', '黄秀琴', '金兴梅', '金莉', '张洪建']
+2023-02-02 13:18:15,087 - MySQL_action.py - INFO - 【提取该公司工资发放账户：完成】
+2023-02-02 13:18:15,087 - Match_action_analyze.py - INFO - 【工资匹配操作v0001：开始】
+2023-02-02 13:18:15,088 - Match_action_analyze.py - INFO - 【工资匹配操作v0001：结束】
+2023-02-02 13:18:15,088 - Match_action_analyze.py - INFO - 【手续费匹配操作v0001：开始】
+2023-02-02 13:18:15,090 - Match_action_analyze.py - INFO - 【手续费匹配操作v0001：结束】
+2023-02-02 13:18:15,090 - Match_action_analyze.py - INFO - 【提现匹配操作v0001：开始】
+2023-02-02 13:18:15,092 - Match_action_analyze.py - INFO - 【提现匹配操作v0001：结束】
+2023-02-02 13:18:15,092 - Match_action_analyze.py - INFO - 【结息匹配操作v0001：开始】
+2023-02-02 13:18:15,093 - Match_action_analyze.py - INFO - 【结息匹配操作v0001：结束】
+2023-02-02 13:18:15,093 - Match_action_analyze.py - INFO - 【凭证编号处理：日期-操作-对手方排序方式，开始】
+2023-02-02 13:18:19,262 - Match_action_analyze.py - INFO - 当前已有凭证的最新编号（生成凭证从下一号开始）：11
+2023-02-02 13:18:19,280 - Match_action_analyze.py - INFO - 【凭证编号处理：日期-操作-对手方排序方式，完成】
+2023-02-02 13:18:19,280 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：开始】
+2023-02-02 13:18:19,294 - data.py - INFO - 执行删除语句成功DELETE from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630 and 原始凭证类型 = '1'
+2023-02-02 13:18:19,294 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：完成】
+2023-02-02 13:18:19,313 - data.py - INFO - 执行插入语句成功，插入表格:execution,插入数据225条
+2023-02-02 13:18:19,313 - Produce_aapz_action.py - INFO - 【生成记账凭证：开始】
+2023-02-02 13:18:19,658 - Produce_aapz_action.py - INFO - 【生成记账凭证：完成】
+2023-02-02 13:18:19,658 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的记账凭证数据：开始】
+2023-02-02 13:18:19,675 - data.py - INFO - 执行删除语句成功DELETE FROM auto_account.aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630
+2023-02-02 13:18:19,675 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的记账凭证数据：完成】
+2023-02-02 13:18:19,702 - data.py - INFO - 执行插入语句成功，插入表格:aapz,插入数据450条
+2023-02-02 13:18:19,702 - MySQL_action.py - INFO - 【提取该公司全部的记账凭证数据：开始】
+2023-02-02 13:18:19,715 - data.py - INFO - 执行sql语句成功:
+select * from aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:18:19,715 - data.py - INFO - 返回数据条数:450条;
+2023-02-02 13:18:19,715 - MySQL_action.py - INFO - 【提取该公司全部的记账凭证数据：完成】
+2023-02-02 13:18:19,715 - Produce_aapz_action.py - INFO - 【生成输出文件：开始】
+2023-02-02 13:18:19,715 - Produce_aapz_action.py - INFO - Index(['ID', 'User_full_name', 'Time', 'RQ', 'HS', 'BH', 'LSBH', 'FJ', 'ZY', 'JFMXH', 'JFKM', 'JFMC', 'JFJE', 'JFSL', 'DFJE', 'DFSL', '是否关联二级科目', '二级科目', '二级科目名称'], dtype='object')
+2023-02-02 13:18:19,843 - Produce_aapz_action.py - INFO - 输出记账凭证文件：D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_2023-02-02-13_18_10/凭证输出/20220630aapz.xls
+2023-02-02 13:18:19,843 - Produce_aapz_action.py - INFO - 【生成输出文件：完成】
+2023-02-02 13:18:19,844 - Verification.py - INFO - current time:20220630
+current user:南京阜仕丰国际贸易有限公司
+
+2023-02-02 13:18:19,844 - Verification.py - INFO - 本次分析统计到的所有交易笔数:225
+2023-02-02 13:18:19,844 - Verification.py - INFO - 本次分析统计到的未匹配交易笔数:10
+2023-02-02 13:18:19,844 - Verification.py - INFO - 本次分析未匹配交易笔数占比:4.44%
+2023-02-02 13:18:19,844 - main.py - INFO - ---------------------------------FuShifeng_New_analyzer Finished----------------------------------
+2023-02-02 13:19:40,842 - main.py - INFO - --------------------------------------------------------------------------------------------------
+2023-02-02 13:19:40,842 - main.py - INFO - Start print log
+2023-02-02 13:19:40,842 - main.py - INFO - ----------------------------------Start to do FuShifeng_New_analyzer------------------------------
+2023-02-02 13:19:40,857 - FuShifeng_New_analyzer.py - INFO - 
+current environment:remote_config.ini
+current time:20220630
+current user:南京阜仕丰国际贸易有限公司
+
+2023-02-02 13:19:40,857 - Verification.py - INFO - 【用户校验：开始】：
+2023-02-02 13:19:40,889 - data.py - INFO - 当前数据库连接url:
+mysql+pymysql://www:Wang-684257913@localhost:3306/auto_account?charset=utf8mb4
+2023-02-02 13:19:40,904 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.user_information where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:19:40,904 - data.py - INFO - 返回数据条数:1条;
+2023-02-02 13:19:40,904 - Verification.py - INFO - 【用户校验结果：校验通过】
+2023-02-02 13:19:40,904 - Interaction.py - INFO - 【开始创建任务文件夹】：
+2023-02-02 13:19:40,904 - Interaction.py - INFO - 已创建任务文件夹，路径为：
+D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_2023-02-02-13_19_40
+2023-02-02 13:19:40,904 - Interaction.py - INFO - 【任务文件夹创建完毕】
+2023-02-02 13:19:43,385 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的银行回单数据：开始】
+2023-02-02 13:19:43,385 - data.py - INFO - 执行sql语句成功:
+select * from bank_receipt_abc where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:19:43,385 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:19:43,385 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的银行回单数据：完成】
+2023-02-02 13:19:43,385 - FuShifeng_New_analyzer.py - INFO - 数据库中已查询到银行回单信息225条，直接使用
+2023-02-02 13:19:43,385 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：开始】
+2023-02-02 13:19:43,401 - data.py - INFO - 执行删除语句成功DELETE from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630 and 原始凭证类型 = '1'
+2023-02-02 13:19:43,401 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：完成】
+2023-02-02 13:19:43,401 - MySQL_action.py - INFO - 【查询当前公司当前账期的农业银行回单数据，抽取到execution表：开始】
+2023-02-02 13:19:43,401 - data.py - INFO - 执行sql语句成功:
+ SELECT                
+                     User_full_name                
+                    ,Time                
+                    ,'1' as 原始凭证类型                
+                    ,ID as 原始凭证ID                
+                    ,concat('ABC_',Trade_log) as 回单流水号                
+                    ,Trade_Account_Name as 交易对手方
+                    ,Trade_Time as 交易时间               
+                    ,IF(Income_Amount <> 0,'收款','付款') as 交易方向                
+                    ,IF(Income_Amount <> 0,Income_Amount,Expend_Amount) as 交易金额                
+                    ,'无货物交易' as 交易标的                
+                    ,concat(ifnull(Trade_Description,''),ifnull(Trade_Summary,''),ifnull(Trade_Postscript,'') ) as 备注                
+                FROM auto_account.bank_receipt_abc 
+                WHERE User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:19:43,401 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:19:43,416 - data.py - INFO - 执行插入语句成功，插入表格:execution,插入数据225条
+2023-02-02 13:19:43,416 - MySQL_action.py - INFO - 【查询当前公司当前账期的农业银行回单数据，抽取到execution表：结束】
+2023-02-02 13:19:43,416 - MySQL_action.py - INFO - 【从任务文件夹读取科目表：开始】
+2023-02-02 13:19:43,416 - MySQL_action.py - INFO - 未读取到科目表信息
+2023-02-02 13:19:43,416 - MySQL_action.py - INFO - 【从任务文件夹读取科目表：完成】
+2023-02-02 13:19:43,416 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的科目表数据：开始】
+2023-02-02 13:19:43,432 - data.py - INFO - 执行sql语句成功:
+select * from balance where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:19:43,432 - data.py - INFO - 返回数据条数:1440条;
+2023-02-02 13:19:43,432 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的科目表数据：完成】
+2023-02-02 13:19:43,432 - MySQL_action.py - INFO - 【提取该公司全部的公司名称对照表数据：开始】
+2023-02-02 13:19:43,448 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.name_comparative_table where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:19:43,448 - data.py - INFO - 返回数据条数:89条;
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司全部的公司名称对照表数据：完成】
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的交易表数据：开始】
+2023-02-02 13:19:43,448 - data.py - INFO - 执行sql语句成功:
+select * from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:19:43,448 - data.py - INFO - 返回数据条数:225条;
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司当前账期下全部的交易表数据：完成】
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司全部的分析逻辑表数据：开始】
+2023-02-02 13:19:43,448 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.analyze where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:19:43,448 - data.py - INFO - 返回数据条数:81条;
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司全部的分析逻辑表数据：完成】
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司全部的操作表数据：开始】
+2023-02-02 13:19:43,448 - data.py - INFO - 执行sql语句成功:
+select * from auto_account.action;
+2023-02-02 13:19:43,448 - data.py - INFO - 返回数据条数:20条;
+2023-02-02 13:19:43,448 - MySQL_action.py - INFO - 【提取该公司全部的操作表数据：完成】
+2023-02-02 13:19:43,448 - Match_action_analyze.py - INFO - 【匹配操作v0001：开始】
+2023-02-02 13:19:43,590 - Match_action_analyze.py - INFO - 【匹配操作v0001：结束】
+2023-02-02 13:19:43,590 - MySQL_action.py - INFO - 【提取该公司工资发放账户：开始】
+2023-02-02 13:19:43,590 - MySQL_action.py - INFO - 【提取该公司全部的用户信息：开始】
+2023-02-02 13:19:43,592 - data.py - INFO - 执行sql语句成功:
+select * from user_information where User_full_name = '南京阜仕丰国际贸易有限公司';
+2023-02-02 13:19:43,592 - data.py - INFO - 返回数据条数:1条;
+2023-02-02 13:19:43,592 - MySQL_action.py - INFO - 【提取该公司全部的用户信息：完成】
+2023-02-02 13:19:43,592 - MySQL_action.py - INFO - 该公司工资发放账户信息：['邓惠欣', '蔡迟', '郑晓晨', '汪芳', '颜金来', '余锁', '龚迎喜', '黄秀琴', '金兴梅', '金莉', '张洪建']
+2023-02-02 13:19:43,592 - MySQL_action.py - INFO - 【提取该公司工资发放账户：完成】
+2023-02-02 13:19:43,592 - Match_action_analyze.py - INFO - 【工资匹配操作v0001：开始】
+2023-02-02 13:19:43,593 - Match_action_analyze.py - INFO - 【工资匹配操作v0001：结束】
+2023-02-02 13:19:43,593 - Match_action_analyze.py - INFO - 【手续费匹配操作v0001：开始】
+2023-02-02 13:19:43,595 - Match_action_analyze.py - INFO - 【手续费匹配操作v0001：结束】
+2023-02-02 13:19:43,595 - Match_action_analyze.py - INFO - 【提现匹配操作v0001：开始】
+2023-02-02 13:19:43,596 - Match_action_analyze.py - INFO - 【提现匹配操作v0001：结束】
+2023-02-02 13:19:43,597 - Match_action_analyze.py - INFO - 【结息匹配操作v0001：开始】
+2023-02-02 13:19:43,598 - Match_action_analyze.py - INFO - 【结息匹配操作v0001：结束】
+2023-02-02 13:19:43,598 - Match_action_analyze.py - INFO - 【凭证编号处理：日期-操作-对手方排序方式，开始】
+2023-02-02 13:19:44,962 - Match_action_analyze.py - INFO - 当前已有凭证的最新编号（生成凭证从下一号开始）：11
+2023-02-02 13:19:44,980 - Match_action_analyze.py - INFO - 【凭证编号处理：日期-操作-对手方排序方式，完成】
+2023-02-02 13:19:44,980 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：开始】
+2023-02-02 13:19:44,993 - data.py - INFO - 执行删除语句成功DELETE from execution where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630 and 原始凭证类型 = '1'
+2023-02-02 13:19:44,994 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的银行回单交易数据：完成】
+2023-02-02 13:19:45,017 - data.py - INFO - 执行插入语句成功，插入表格:execution,插入数据225条
+2023-02-02 13:19:45,017 - Produce_aapz_action.py - INFO - 【生成记账凭证：开始】
+2023-02-02 13:19:45,354 - Produce_aapz_action.py - INFO - 【生成记账凭证：完成】
+2023-02-02 13:19:45,354 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的记账凭证数据：开始】
+2023-02-02 13:19:45,371 - data.py - INFO - 执行删除语句成功DELETE FROM auto_account.aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630
+2023-02-02 13:19:45,371 - MySQL_action.py - INFO - 【删除该公司当前账期下全部的记账凭证数据：完成】
+2023-02-02 13:19:45,393 - data.py - INFO - 执行插入语句成功，插入表格:aapz,插入数据450条
+2023-02-02 13:19:45,393 - MySQL_action.py - INFO - 【提取该公司全部的记账凭证数据：开始】
+2023-02-02 13:19:45,404 - data.py - INFO - 执行sql语句成功:
+select * from aapz where User_full_name = '南京阜仕丰国际贸易有限公司' and Time = 20220630;
+2023-02-02 13:19:45,404 - data.py - INFO - 返回数据条数:450条;
+2023-02-02 13:19:45,404 - MySQL_action.py - INFO - 【提取该公司全部的记账凭证数据：完成】
+2023-02-02 13:19:45,404 - Produce_aapz_action.py - INFO - 【生成输出文件：开始】
+2023-02-02 13:19:45,404 - Produce_aapz_action.py - INFO - Index(['ID', 'User_full_name', 'Time', 'RQ', 'HS', 'BH', 'LSBH', 'FJ', 'ZY', 'JFMXH', 'JFKM', 'JFMC', 'JFJE', 'JFSL', 'DFJE', 'DFSL', '是否关联二级科目', '二级科目', '二级科目名称'], dtype='object')
+2023-02-02 13:19:45,531 - Produce_aapz_action.py - INFO - 输出记账凭证文件：D:\会计自动化\python_test\南京阜仕丰国际贸易有限公司_所属账期_20220630_2023-02-02-13_19_40/凭证输出/20220630aapz.xls
+2023-02-02 13:19:45,531 - Produce_aapz_action.py - INFO - 【生成输出文件：完成】
+2023-02-02 13:19:45,531 - Verification.py - INFO - current time:20220630
+current user:南京阜仕丰国际贸易有限公司
+
+2023-02-02 13:19:45,532 - Verification.py - INFO - 本次分析统计到的所有交易笔数:225
+2023-02-02 13:19:45,532 - Verification.py - INFO - 本次分析统计到的未匹配交易笔数:10
+2023-02-02 13:19:45,532 - Verification.py - INFO - 本次分析未匹配交易笔数占比:4.44%
+2023-02-02 13:19:45,532 - main.py - INFO - ---------------------------------FuShifeng_New_analyzer Finished----------------------------------

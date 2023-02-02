@@ -206,7 +206,7 @@ class Produce_aapz_action(Base_Action):
             result['HS'] = list_HS
 
         # 处理摘要数据
-        result['ZY'] = result.apply(lambda x: x['ZY'].format(TradeTime=x['交易时间']),axis=1)
+        result['ZY'] = result.apply(lambda x: x['ZY'].format(TradeTime=x['交易时间'],交易对手方=x['交易对手方'],交易方向=x['交易方向']),axis=1)
 
         # 数据清洗完毕，进行格式清洗后插入记账凭证表aapz
         # 先删除已有的aapz记账凭证数据，再进行插入
