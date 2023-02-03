@@ -154,7 +154,7 @@ class Produce_aapz_action(Base_Action):
 
         # 第三次清洗，需要使用者参与，先人工查找对应关系并补充进名称对应表中，随后再次执行清洗
         # 清洗时会自动跳过交易对手方为空的数据和程序未找到对应操作的数据
-        def funshion_05(jfkm,opposite):
+        def funshion_05(jfkm,opposite,ejkm):
             result = self.find_name(name=opposite, JFKM=jfkm)
             if result.empty:
                 logger.info(jfkm+opposite+'未找到对应关系')
@@ -163,7 +163,7 @@ class Produce_aapz_action(Base_Action):
                 # 更新名称对照表
                 self.get_name_comparative_file()
                 # 再次执行funshion_02，根据JFKM和对手方查找二级科目
-                result = funshion_02(jfkm,opposite)
+                result = funshion_02(jfkm,opposite,ejkm)
             return result
 
         # 生成此时所有未匹配操作对应的摘要列表
@@ -173,7 +173,7 @@ class Produce_aapz_action(Base_Action):
         NO_Matched_Action_ZY_list = NO_Matched_Action_ZY_list.tolist()
 
         # 执行清洗时需要去除交易对手方为空的数据和程序未找到对应操作的数据（根据摘要判断）
-        result['二级科目'] = result.apply(lambda x: funshion_05(jfkm=x['JFKM'], opposite=x['交易对手方']) if x['交易对手方'] != None and x['二级科目'] == '未找到对应值' and x['ZY'] not in NO_Matched_Action_ZY_list else x['二级科目'], axis=1)
+        result['二级科目'] = result.apply(lambda x: funshion_05(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']) if x['交易对手方'] != None and x['二级科目'] == '未找到对应值' and x['ZY'] not in NO_Matched_Action_ZY_list else x['二级科目'], axis=1)
 
         # 根据输入的二级科目在科目余额表中查找科目名称并返回
         def funshion_04(EJKM):
@@ -221,6 +221,146 @@ class Produce_aapz_action(Base_Action):
     # 首先对交易表和操作表进行左连接
     # 随后对结果进行清洗，主要是计算金额和查找对应二级科目
     # 接着将凭证整理成记账凭证的格式插入到aapz表中
+    def aapz_manager_v0002(self):
+        logger.info('【生成记账凭证：开始】')
+        # 将交易表和操作表进行左连接，连接键为‘操作’
+        result = pd.merge(left=self.execution, right=self.action, how='left', left_on='操作', right_on='操作')
+        # 根据操作中配置的取值字段，读取对应的每一行取值数据
+        result['取值'] = result.apply(lambda x: x[x['取值']], axis=1)
+        # 提取生成凭证涉及的字段，去除无关字段
+        result = result[
+            ['User_full_name', 'Time', '交易对手方', '交易时间', '交易方向', '备注', '凭证编号', 'HS', 'ZY', 'JFKM',
+             'JFMC', 'JFJE', 'DFJE', '取值', '是否关联二级科目', '二级科目', '二级科目名称']]
+        # 生成凭证中的日期格式 20220630 变为 2022/6/30
+        def funshion_01(time):
+            year = time[0:4]
+            if time[4] == '0':
+                month = time[5]
+            else:
+                month = time[4:6]
+            if time[6] == 0:
+                day = time[7]
+            else:
+                day = time[6:8]
+            result = str(year)+'/'+str(month)+'/'+str(day)
+            return result
+        result['RQ'] =result.apply(lambda x : funshion_01(x['Time']), axis=1)
+        result['JFJE'] = result.apply(lambda x: x['取值'] * x['JFJE'], axis=1)
+        result['DFJE'] = result.apply(lambda x: x['取值'] * x['DFJE'], axis=1)
+        result['LSBH'] = result.apply(lambda x: int(x['凭证编号'].replace(' 1-','')), axis=1)
+        # 第一次清洗，根据借方科目代码和交易对手方，在比对表中查找对应的二级明细科目和科目名称
+        def funshion_02(jfkm,opposite,ejkm,log=False):
+            if ejkm == '未找到对应值':
+                result = self.name_comparative_file
+                result = result.loc[result['一级科目'] == jfkm]
+                result = result.loc[result['Full_Name'] == opposite]
+                result = result.reset_index(drop=True)
+                if result.empty:
+                    result = '未找到对应值'
+                    if log:
+                        logger.info('【手动新增科目】 %s %s' %(jfkm,opposite))
+                else:
+                    result = result['JFKM'][0]
+                return result
+            else:
+                result = ejkm
+                return result
+        result['二级科目'] = result.apply(lambda x: funshion_02(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']), axis=1)
+        def funshion_03(jfkm,opposite,kmmc):
+            if kmmc == '未找到对应值':
+                result = self.name_comparative_file
+                result = result.loc[result['一级科目'] == jfkm]
+                result = result.loc[result['Full_Name'] == opposite]
+                result = result.reset_index(drop=True)
+                if result.empty:
+                    result = '未找到对应值'
+                else:
+                    result = result['KMMC'][0]
+                return result
+            else:
+                return kmmc
+        result['二级科目名称'] = result.apply(lambda x: funshion_03(jfkm=x['JFKM'], opposite=x['交易对手方'],kmmc=x['二级科目名称']), axis=1)
+
+        # 第二次清洗，从用户信息表中获取给定的科目取值，根据给定的科目替换取值
+        # 举例 银行科目在用户信息中已给出，将该科目名称写入二级科目中
+        result['二级科目'] = result.apply(lambda x: self.bank_account if x['JFKM']=='1002' else x['二级科目'], axis=1)
+
+
+        # 第三次清洗，需要使用者参与，先人工查找对应关系并补充进名称对应表中，随后再次执行清洗
+        # 清洗时会自动跳过交易对手方为空的数据和程序未找到对应操作的数据
+        def funshion_05(jfkm,opposite,ejkm):
+            result = self.find_name(name=opposite, JFKM=jfkm)
+            if result.empty:
+                logger.info(jfkm+opposite+'未找到对应关系')
+                result = '未找到对应值'
+            else:
+                # 更新名称对照表
+                self.get_name_comparative_file()
+                # 再次执行funshion_02，根据JFKM和对手方查找二级科目
+                result = funshion_02(jfkm,opposite,ejkm)
+            return result
+
+        # 生成此时所有未匹配操作对应的摘要列表
+        NO_Matched_Action_ZY_list = self.action
+        NO_Matched_Action_ZY_list = NO_Matched_Action_ZY_list.loc[NO_Matched_Action_ZY_list['操作'].str.contains('NO_Matched_Action')]
+        NO_Matched_Action_ZY_list = NO_Matched_Action_ZY_list['ZY']
+        NO_Matched_Action_ZY_list = NO_Matched_Action_ZY_list.tolist()
+
+        # 执行清洗时需要去除交易对手方为空的数据和程序未找到对应操作的数据（根据摘要判断）
+        # result['二级科目'] = result.apply(lambda x: funshion_05(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']) if x['交易对手方'] != None and x['二级科目'] == '未找到对应值' and x['ZY'] not in NO_Matched_Action_ZY_list else x['二级科目'], axis=1)
+        NO_Matched_result = result[~result['ZY'].isin(NO_Matched_Action_ZY_list)]
+        NO_Matched_result = NO_Matched_result.loc[(result['交易对手方'].notnull()) & (result['二级科目'] == '未找到对应值')]
+        # 数据去重
+        NO_Matched_result = NO_Matched_result[['JFKM', '交易对手方', '二级科目']]
+        NO_Matched_result = NO_Matched_result.drop_duplicates(keep='last', inplace=False)
+        logger.info(NO_Matched_result)
+        # 调用查找算法进行匹配，需要用户参与。更新结果输入比对表中
+        NO_Matched_result = NO_Matched_result.apply(lambda x: funshion_05(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']), axis=1)
+        self.get_name_comparative_file()
+        logger.info(len(self.name_comparative_file))
+        # 再次调用方法进行清洗（执行逻辑与第一次相同）
+        result['二级科目'] = result.apply(
+            lambda x: funshion_02(jfkm=x['JFKM'], opposite=x['交易对手方'], ejkm=x['二级科目'],log=True), axis=1)
+
+        # 根据输入的二级科目在科目余额表中查找科目名称并返回
+        def funshion_04(EJKM):
+            result = self.balance_file
+            result = result.loc[result['JFKM'] == EJKM]
+            result = result.reset_index(drop=True)
+            if result.empty:
+                result = '未找到对应值'
+            else:
+                result = result['KMMC'][0]
+            return result
+        result['二级科目名称'] = result.apply(lambda x: funshion_04(EJKM=x['二级科目']), axis=1)
+
+        # 如果凭证采用默认方式编号，即一条交易一张凭证，则不用处理'HS'行数数据。
+        # 如果凭证采用银行回单按天汇总的编号，则需要处理'HS'行数数据。
+        # 处理逻辑为，同一编号内的行数重新编号
+        if self.aapz_number_type == 'day-action-opposite':
+            list_BH = result['凭证编号'].to_list()
+            list_HS = [1]
+            i = 1
+            while i < len(list_BH):
+                if list_BH[i] == list_BH[i-1]:
+                    HS = list_HS[i-1] + 1
+                    list_HS.append(HS)
+                else:
+                    HS = 1
+                    list_HS.append(HS)
+                i = i + 1
+            result = result.drop(['HS'], axis=1)
+            result['HS'] = list_HS
+
+        # 处理摘要数据
+        result['ZY'] = result.apply(lambda x: x['ZY'].format(TradeTime=x['交易时间'],交易对手方=x['交易对手方'],交易方向=x['交易方向']),axis=1)
+
+        # 数据清洗完毕，进行格式清洗后插入记账凭证表aapz
+        # 先删除已有的aapz记账凭证数据，再进行插入
+        result = result[['User_full_name','Time', 'RQ', 'HS', '凭证编号', 'LSBH',  'ZY', 'JFKM', 'JFMC', 'JFJE', 'DFJE', '是否关联二级科目', '二级科目', '二级科目名称']]
+        result = result.rename(columns={'凭证编号': 'BH'})
+        logger.info('【生成记账凭证：完成】')
+        return result
 
     # 该函数用于生成输出的记账凭证数据，返回结果为一个df并输出一个EXCEL
     def aapz_out_put(self, FolderName_dic):

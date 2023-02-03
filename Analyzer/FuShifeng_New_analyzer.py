@@ -98,7 +98,7 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Produce_aapz_action.execution = execution_file
         self.Produce_aapz_action.name_comparative_file = name_comparative_file
         self.Produce_aapz_action.bank_account = user_info['Bank_account'][0]
-        aapz = self.Produce_aapz_action.aapz_manager()
+        aapz = self.Produce_aapz_action.aapz_manager_v0002()
 
 
         # 记账凭证插入aapz表中
