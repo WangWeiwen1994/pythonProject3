@@ -48,5 +48,7 @@ class Base_Action():
         self.Withdraw_Charge_keyword_list = ['报销', '提现', '备用金', '取现']
         # 定义结息匹配的关键词列表
         self.Interest_keyword_list = ['结息', '利息']
-        # 定义货款匹配的关键词列表
+        # 定义支付货款匹配的关键词列表
         self.Payment_on_goods_keyword_list = ['货款']
+        # 定义收到货款匹配的关键词列表
+        self.Income_on_goods_keyword_list = ['货款']

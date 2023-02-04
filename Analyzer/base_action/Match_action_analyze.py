@@ -107,6 +107,19 @@ class Match_action_analyze(Base_Action):
         # 更新属性值
         self.execution = df
 
+    # 新增收到货款匹配方法，凭证为银行回单，交易方向为收款，包含关键词‘货款’交易，匹配为收到货款，并赋操作值ACTION_000000001
+    def Income_on_goods_match_v0001(self):
+        logger.info('【收到货款匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = self.Income_on_goods_keyword_list
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
+                df['备注'].str.contains(keyword)), ('操作')] = 'ACTION_000000001'
+
+        logger.info('【收到货款匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
+
 
 
 
