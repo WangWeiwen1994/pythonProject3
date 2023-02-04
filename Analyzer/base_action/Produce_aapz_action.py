@@ -313,11 +313,11 @@ class Produce_aapz_action(Base_Action):
         # 数据去重
         NO_Matched_result = NO_Matched_result[['JFKM', '交易对手方', '二级科目']]
         NO_Matched_result = NO_Matched_result.drop_duplicates(keep='last', inplace=False)
-        logger.info(NO_Matched_result)
+        # logger.info(NO_Matched_result)
         # 调用查找算法进行匹配，需要用户参与。更新结果输入比对表中
         NO_Matched_result = NO_Matched_result.apply(lambda x: funshion_05(jfkm=x['JFKM'], opposite=x['交易对手方'],ejkm=x['二级科目']), axis=1)
         self.get_name_comparative_file()
-        logger.info(len(self.name_comparative_file))
+        # logger.info(len(self.name_comparative_file))
         # 再次调用方法进行清洗（执行逻辑与第一次相同）
         result['二级科目'] = result.apply(
             lambda x: funshion_02(jfkm=x['JFKM'], opposite=x['交易对手方'], ejkm=x['二级科目'],log=True), axis=1)
