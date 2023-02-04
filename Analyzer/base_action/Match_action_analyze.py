@@ -44,18 +44,18 @@ class Match_action_analyze(Base_Action):
         # 更新属性值
         self.execution = df
 
-    # 该方法根据银行回单对手方账户和备注信息是否包含关键字’工资‘来判断是否匹配工资操作
+    # 该方法根据银行回单对手方账户和备注信息是否包含关键字’工资‘来判断是否匹配工资操作，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action）
     def salary_match_v0001(self,Salary_Bankaccount):
         # 遍历每一笔交易，如果原始凭证为银行回单,对手方是工资发放账户，交易方向为付款，且备注中包含关键词'工资'，则匹配对应的操作
         logger.info('【工资匹配操作v0001：开始】')
         df = self.execution
         # 筛选原始凭证为银行回单,对手方是工资发放账户，交易方向为付款，且备注中包含关键词'工资'的数据,赋操作值ACTION_000000007
-        df.loc[(df['User_full_name']==self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (df['备注'].str.contains('工资')) & (df.交易对手方.isin(Salary_Bankaccount)),('操作')] = 'ACTION_000000007'
+        df.loc[(df['User_full_name']==self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (df['备注'].str.contains('工资')) & (df.交易对手方.isin(Salary_Bankaccount))& (df['操作'].str.contains('NO_Matched_Action')),('操作')] = 'ACTION_000000007'
         logger.info('【工资匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
-    # 该方法对凭证为银行回单，交易方向为付款，对手方为空，包含关键词‘手续费’、‘短信费’等交易，判断为支付手续费，并赋操作值ACTION_000000006
+    # 该方法对凭证为银行回单，交易方向为付款，对手方为空，包含关键词‘手续费’、‘短信费’等交易，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action），判断为支付手续费，并赋操作值ACTION_000000006
     # keyword_list为一个列表，列表元素为包含的关键词，增加关键词在base的对应属性self.keyword_list中增加。
     def Service_Charge_match_v0001(self):
         logger.info('【手续费匹配操作v0001：开始】')
@@ -63,58 +63,58 @@ class Match_action_analyze(Base_Action):
         keyword_list = self.Service_Charge_keyword_list
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
-                df['备注'].str.contains(keyword)) & (df['交易对手方'].isnull()), ('操作')] = 'ACTION_000000006'
+                df['备注'].str.contains(keyword)) & (df['交易对手方'].isnull())& (df['操作'].str.contains('NO_Matched_Action')), ('操作')] = 'ACTION_000000006'
 
         logger.info('【手续费匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
-    # 该方法对凭证为银行回单，交易方向为收款，对手方为空，包含关键词‘结息’、‘利息’的交易，判断为结息，并赋操作值ACTION_000000008
+    # 该方法对凭证为银行回单，交易方向为收款，对手方为空，包含关键词‘结息’、‘利息’的交易，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action），判断为结息，并赋操作值ACTION_000000008
     def Interest_match_v0001(self):
         logger.info('【结息匹配操作v0001：开始】')
         df = self.execution
         keyword_list = self.Interest_keyword_list
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
-                df['备注'].str.contains(keyword)) & (df['交易对手方'].isnull()), ('操作')] = 'ACTION_000000008'
+                df['备注'].str.contains(keyword)) & (df['交易对手方'].isnull())& (df['操作'].str.contains('NO_Matched_Action')), ('操作')] = 'ACTION_000000008'
 
         logger.info('【结息匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
-    # 该方法对凭证为银行回单，交易方向为付款，包含关键词‘报销’，‘提现’，‘备用金’等交易，判断为提现，并赋操作值ACTION_000000004
+    # 该方法对凭证为银行回单，交易方向为付款，包含关键词‘报销’，‘提现’，‘备用金’等交易，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action），判断为提现，并赋操作值ACTION_000000004
     def Withdraw_match_v0001(self):
         logger.info('【提现匹配操作v0001：开始】')
         df = self.execution
         keyword_list = self.Withdraw_Charge_keyword_list
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
-                df['备注'].str.contains(keyword)), ('操作')] = 'ACTION_000000004'
+                df['备注'].str.contains(keyword))& (df['操作'].str.contains('NO_Matched_Action')), ('操作')] = 'ACTION_000000004'
 
         logger.info('【提现匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
-    # 新增支付货款匹配方法，凭证为银行回单，交易方向为付款，包含关键词‘货款’交易，匹配为支付货款，并赋操作值ACTION_000000002
+    # 新增支付货款匹配方法，凭证为银行回单，交易方向为付款，包含关键词‘货款’交易，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action），匹配为支付货款，并赋操作值ACTION_000000002
     def Payment_on_goods_match_v0001(self):
         logger.info('【支付货款匹配操作v0001：开始】')
         df = self.execution
         keyword_list = self.Payment_on_goods_keyword_list
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
-                df['备注'].str.contains(keyword)), ('操作')] = 'ACTION_000000002'
+                df['备注'].str.contains(keyword))& (df['操作'].str.contains('NO_Matched_Action')), ('操作')] = 'ACTION_000000002'
 
         logger.info('【支付货款匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
-    # 新增收到货款匹配方法，凭证为银行回单，交易方向为收款，包含关键词‘货款’交易，匹配为收到货款，并赋操作值ACTION_000000001
+    # 新增收到货款匹配方法，凭证为银行回单，交易方向为收款，包含关键词‘货款’交易，且只对action_match操作未匹配到的进行匹配（操作结果未NO_matched_action），匹配为收到货款，并赋操作值ACTION_000000001
     def Income_on_goods_match_v0001(self):
         logger.info('【收到货款匹配操作v0001：开始】')
         df = self.execution
         keyword_list = self.Income_on_goods_keyword_list
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
-                df['备注'].str.contains(keyword)), ('操作')] = 'ACTION_000000001'
+                df['备注'].str.contains(keyword))& (df['操作'].str.contains('NO_Matched_Action')), ('操作')] = 'ACTION_000000001'
 
         logger.info('【收到货款匹配操作v0001：结束】')
         # 更新属性值
