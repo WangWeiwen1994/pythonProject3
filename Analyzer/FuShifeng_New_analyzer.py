@@ -77,10 +77,15 @@ class FuShifeng_New_analyzer(Base_Action_dic):
         self.Match_action_analyze.Income_on_goods_match_v0001()
 
         # 调用借出款项匹配逻辑
-        self.Match_action_analyze.Loan_match_v0001()
+        self.Match_action_analyze.Loan_match_v0001(Salary_Bankaccount=Salary_Bankaccount)
 
         # 调用收到还款匹配逻辑
-        self.Match_action_analyze.Received_Repayment_match_v0001()
+        self.Match_action_analyze.Received_Repayment_match_v0001(Salary_Bankaccount=Salary_Bankaccount)
+
+        # 调用员工借款匹配逻辑和收到员工还款逻辑（不同公司不同操作方法，因对应的其他应收款科目不同）
+        if self.user in ['南京阜仕丰国际贸易有限公司']:
+            self.Match_action_analyze.Staff_Loan_match_v0001(Salary_Bankaccount=Salary_Bankaccount,action='ACTION_000000011')
+            self.Match_action_analyze.Staff_Received_Repayment_match_v0001(Salary_Bankaccount=Salary_Bankaccount, action='ACTION_000000012')
 
 
         # 调用凭证编号处理方法,为execution表中的凭证编号列赋值，返回处理后的execution

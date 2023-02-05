@@ -121,34 +121,62 @@ class Match_action_analyze(Base_Action):
         self.execution = df
 
 
-    # 新增借出款项方法，凭证为银行回单，交易方向为付款，包含关键词‘借款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为借出款项，并赋操作值ACTION_000000009
-    def Loan_match_v0001(self):
+    # 新增借出款项方法，凭证为银行回单，交易方向为付款，交易对手方不是员工，包含关键词‘借款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为借出款项，并赋操作值ACTION_000000009
+    def Loan_match_v0001(self,Salary_Bankaccount):
         logger.info('【借出款项匹配操作v0001：开始】')
         df = self.execution
         keyword_list = ['借款']
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
-                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action')), (
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action'))& (~df.交易对手方.isin(Salary_Bankaccount)), (
                 '操作')] = 'ACTION_000000009'
 
         logger.info('【借出款项匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
-    # 新增收到还款匹配方法，凭证为银行回单，交易方向为收款，包含关键词‘还款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为借出款项，并赋操作值ACTION_0000000010
-    def Received_Repayment_match_v0001(self):
+    # 新增收到还款匹配方法，凭证为银行回单，交易方向为收款，交易对手方不是员工，包含关键词‘还款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为收到还款，并赋操作值ACTION_0000000010
+    def Received_Repayment_match_v0001(self,Salary_Bankaccount):
         logger.info('【收到还款匹配操作v0001：开始】')
         df = self.execution
         keyword_list = ['还款']
         for keyword in keyword_list:
             df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
-                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action')), (
-                '操作')] = 'ACTION_0000000010'
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action'))& (~df.交易对手方.isin(Salary_Bankaccount)), (
+                '操作')] = 'ACTION_000000010'
 
         logger.info('【收到还款匹配操作v0001：结束】')
         # 更新属性值
         self.execution = df
 
+    # 新增员工借出款项方法，凭证为银行回单，交易方向为付款，交易对手方是员工，包含关键词‘借款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为员工借款，并赋操作值ACTION_000000011
+    # 该逻辑匹配的操作值ACTION_000000011为南京阜仕丰国际贸易有限公司专用。若其他用户有类似逻辑，需要改变操作值
+    def Staff_Loan_match_v0001(self,Salary_Bankaccount,action):
+        logger.info('【员工借款匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = ['借款']
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action'))& (df.交易对手方.isin(Salary_Bankaccount)), (
+                '操作')] = action
+
+        logger.info('【员工借款匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
+
+    # 新增收到员工还款匹配方法，凭证为银行回单，交易方向为收款，交易对手方是员工，包含关键词‘还款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为收到员工还款，并赋操作值ACTION_0000000010
+    def Staff_Received_Repayment_match_v0001(self,Salary_Bankaccount,action):
+        logger.info('【收到员工还款匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = ['还款']
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action'))& (df.交易对手方.isin(Salary_Bankaccount)), (
+                '操作')] = action
+
+        logger.info('【收到员工还款匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
 
 
 
