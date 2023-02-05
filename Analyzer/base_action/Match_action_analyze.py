@@ -2,7 +2,7 @@
 # 分析类包含如下几个方法去进行匹配操作：
 # 1 工资、缴税等高频交易，但匹配元素缺失的（缴税的银行流水，无对手方）：
 # 使用固定逻辑（如通过银行流水中是否包含关键词）进行匹配
-# 2 根据科目余额表中的已有科目（应收账款，应付账款）进行判断的：
+# 2 根据科目余额表中的已有科目（应收账款，应付账款）进行判断的：（目前还未实现）
 # 该类方法需要先查找对应关系，同时若可提炼出符合现有路径的逻辑的，需要补充到逻辑表中
 import pandas as pd
 
@@ -121,9 +121,33 @@ class Match_action_analyze(Base_Action):
         self.execution = df
 
 
+    # 新增借出款项方法，凭证为银行回单，交易方向为付款，包含关键词‘借款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为借出款项，并赋操作值ACTION_000000009
+    def Loan_match_v0001(self):
+        logger.info('【借出款项匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = ['借款']
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '付款') & (
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action')), (
+                '操作')] = 'ACTION_000000009'
 
+        logger.info('【借出款项匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
 
+    # 新增收到还款匹配方法，凭证为银行回单，交易方向为收款，包含关键词‘还款’交易，且只对action_match操作未匹配到的进行匹配（操作结果为NO_matched_action），匹配为借出款项，并赋操作值ACTION_0000000010
+    def Received_Repayment_match_v0001(self):
+        logger.info('【收到还款匹配操作v0001：开始】')
+        df = self.execution
+        keyword_list = ['还款']
+        for keyword in keyword_list:
+            df.loc[(df['User_full_name'] == self.user) & (df['原始凭证类型'] == '1') & (df['交易方向'] == '收款') & (
+                df['备注'].str.contains(keyword)) & (df['操作'].str.contains('NO_Matched_Action')), (
+                '操作')] = 'ACTION_0000000010'
 
+        logger.info('【收到还款匹配操作v0001：结束】')
+        # 更新属性值
+        self.execution = df
 
 
 

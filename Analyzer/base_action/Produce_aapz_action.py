@@ -258,7 +258,7 @@ class Produce_aapz_action(Base_Action):
                 if result.empty:
                     result = '未找到对应值'
                     if log:
-                        logger.info('【手动新增科目】 %s %s' %(jfkm,opposite))
+                        logger.info('【手动新增科目】【请做去重，可能包含重复值】 %s %s' %(jfkm,opposite))
                 else:
                     result = result['JFKM'][0]
                 return result
