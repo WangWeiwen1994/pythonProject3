@@ -229,7 +229,7 @@ class Produce_aapz_action(Base_Action):
         result['取值'] = result.apply(lambda x: x[x['取值']], axis=1)
         # 提取生成凭证涉及的字段，去除无关字段
         result = result[
-            ['User_full_name', 'Time', '交易对手方', '交易时间', '交易方向', '备注', '凭证编号', 'HS', 'ZY', 'JFKM',
+            ['ID_x','User_full_name', 'Time', '交易对手方', '交易时间', '交易方向', '备注', '凭证编号', 'HS', 'ZY', 'JFKM',
              'JFMC', 'JFJE', 'DFJE', '取值', '是否关联二级科目', '二级科目', '二级科目名称']]
         # 生成凭证中的日期格式 20220630 变为 2022/6/30
         def funshion_01(time):
@@ -357,8 +357,8 @@ class Produce_aapz_action(Base_Action):
 
         # 数据清洗完毕，进行格式清洗后插入记账凭证表aapz
         # 先删除已有的aapz记账凭证数据，再进行插入
-        result = result[['User_full_name','Time', 'RQ', 'HS', '凭证编号', 'LSBH',  'ZY', 'JFKM', 'JFMC', 'JFJE', 'DFJE', '是否关联二级科目', '二级科目', '二级科目名称']]
-        result = result.rename(columns={'凭证编号': 'BH'})
+        result = result[['ID_x', 'User_full_name','Time', 'RQ', 'HS', '凭证编号', 'LSBH',  'ZY', 'JFKM', 'JFMC', 'JFJE', 'DFJE', '是否关联二级科目', '二级科目', '二级科目名称']]
+        result = result.rename(columns={'凭证编号': 'BH','ID_x': 'execution_ID'})
         logger.info('【生成记账凭证：完成】')
         return result
 
